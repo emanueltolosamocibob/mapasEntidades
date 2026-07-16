@@ -1,16 +1,19 @@
-import { useSession } from "../contexts/SessionContext";
+import CreateSessionForm from "../components/CreateSessionForm";
 
 function CreateOrJoinPage() {
-  const session = useSession();
-  const userId = session.status === "ready" ? session.user.id : "";
-
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
       <h1>mapasEntidades</h1>
-      <p>
-        Conectado. Sesión anónima: <code>{userId}</code>
-      </p>
-      <p>Acá van a ir los formularios de "crear sesión" y "unirse a sesión" (MAP-10, MAP-11).</p>
+
+      <section>
+        <h2>Crear sesión</h2>
+        <CreateSessionForm />
+      </section>
+
+      <section>
+        <h2>Unirse a sesión</h2>
+        <p>Acá va el formulario de "unirse a sesión" (MAP-11).</p>
+      </section>
     </main>
   );
 }
