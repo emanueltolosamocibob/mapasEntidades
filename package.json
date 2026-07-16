@@ -1,0 +1,27 @@
+{
+  "name": "mapasentidades",
+  "version": "1.0.0",
+  "description": "Plataforma que muestra en un mapa, en tiempo real, la ubicación de múltiples dispositivos. Caso de uso inicial: partidas de airsoft. Diseñado para extenderse en el futuro a flotas de transporte urbano sin rediseñar el núcleo.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emanueltolosamocibob/mapasEntidades.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/emanueltolosamocibob/mapasEntidades/issues"
+  },
+  "homepage": "https://github.com/emanueltolosamocibob/mapasEntidades#readme",
+  "devDependencies": {
+    "supabase": "^2.109.1"
+  }
+}
