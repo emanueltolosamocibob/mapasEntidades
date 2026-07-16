@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router";
 import { useCreateSession } from "../hooks/useCreateSession";
 
 function CreateSessionForm() {
@@ -32,6 +33,7 @@ function CreateSessionForm() {
         <p style={{ fontSize: "2rem", fontWeight: "bold", letterSpacing: "0.1em" }}>
           {state.session.code}
         </p>
+        <Link to={`/session/${state.session.code}/host`}>Ir al panel de anfitrión</Link>
       </div>
     );
   }
