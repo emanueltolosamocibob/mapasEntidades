@@ -26,5 +26,26 @@ export function useModerateParticipant() {
     if (error) setError(error.message);
   }
 
-  return { accept, reject, pendingId, error };
+  async function reassignTeam(participantId: string, teamId: string) {
+    setPendingId(participantId);
+    setError(null);
+    const { error } = await supabase.rpc("reassign_team", {
+      p_participant_id: participantId,
+      p_team_id: teamId,
+    });
+    setPendingId(null);
+    if (error) setError(error.message);
+  }
+
+  async function kick(participantId: string) {
+    setPendingId(participantId);
+    setError(null);
+    const { error } = await supabase.rpc("kick_participant", {
+      p_participant_id: participantId,
+    });
+    setPendingId(null);
+    if (error) setError(error.message);
+  }
+
+  return { accept, reject, reassignTeam, kick, pendingId, error };
 }
