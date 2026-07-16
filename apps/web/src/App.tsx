@@ -1,33 +1,30 @@
-import { useEffect, useState } from "react";
-import { ensureAnonymousSession } from "./lib/supabaseClient";
-
-type ConnectionState =
-  | { status: "loading" }
-  | { status: "connected"; userId: string }
-  | { status: "error"; message: string };
+import { Route, Routes } from "react-router";
+import { useSession } from "./contexts/SessionContext";
+import CreateOrJoinPage from "./pages/CreateOrJoinPage";
+import HostPanelPage from "./pages/HostPanelPage";
+import PlayPage from "./pages/PlayPage";
 
 function App() {
-  const [state, setState] = useState<ConnectionState>({ status: "loading" });
+  const session = useSession();
 
-  useEffect(() => {
-    ensureAnonymousSession()
-      .then((user) => setState({ status: "connected", userId: user?.id ?? "" }))
-      .catch((error: Error) => setState({ status: "error", message: error.message }));
-  }, []);
+  if (session.status === "loading") {
+    return <p style={{ fontFamily: "sans-serif", padding: "2rem" }}>Conectando con Supabase...</p>;
+  }
+
+  if (session.status === "error") {
+    return (
+      <p style={{ fontFamily: "sans-serif", padding: "2rem", color: "crimson" }}>
+        Error de conexión: {session.message}
+      </p>
+    );
+  }
 
   return (
-    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
-      <h1>mapasEntidades</h1>
-      {state.status === "loading" && <p>Conectando con Supabase...</p>}
-      {state.status === "connected" && (
-        <p>
-          Conectado. Sesión anónima creada: <code>{state.userId}</code>
-        </p>
-      )}
-      {state.status === "error" && (
-        <p style={{ color: "crimson" }}>Error de conexión: {state.message}</p>
-      )}
-    </main>
+    <Routes>
+      <Route path="/" element={<CreateOrJoinPage />} />
+      <Route path="/session/:code/host" element={<HostPanelPage />} />
+      <Route path="/session/:code/play" element={<PlayPage />} />
+    </Routes>
   );
 }
 
