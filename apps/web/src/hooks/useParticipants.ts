@@ -5,19 +5,19 @@ type Participant = {
   id: string;
   nickname: string;
   status: string;
+  team_id: string | null;
   requested_at: string;
 };
 
-export function usePendingParticipants(sessionId: string | undefined) {
+export function useParticipants(sessionId: string | undefined) {
   const [participants, setParticipants] = useState<Participant[]>([]);
 
   const refresh = useCallback(() => {
     if (!sessionId) return;
     supabase
       .from("airsoft_participants")
-      .select("id, nickname, status, requested_at")
+      .select("id, nickname, status, team_id, requested_at")
       .eq("session_id", sessionId)
-      .eq("status", "pending")
       .order("requested_at", { ascending: true })
       .then(({ data }) => {
         if (data) setParticipants(data);
