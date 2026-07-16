@@ -1,4 +1,5 @@
 import CreateSessionForm from "../components/CreateSessionForm";
+import JoinSessionForm from "../components/JoinSessionForm";
 
 function CreateOrJoinPage() {
   return (
@@ -12,7 +13,7 @@ function CreateOrJoinPage() {
 
       <section>
         <h2>Unirse a sesión</h2>
-        <p>Acá va el formulario de "unirse a sesión" (MAP-11).</p>
+        <JoinSessionForm />
       </section>
     </main>
   );
