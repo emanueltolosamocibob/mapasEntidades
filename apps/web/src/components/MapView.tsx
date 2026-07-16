@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet";
+import { latLngBounds } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 type PlayerPosition = {
@@ -15,6 +16,15 @@ const CARTO_VOYAGER_URL =
 
 const DEFAULT_CENTER: [number, number] = [-34.6037, -58.3816];
 
+function boundsForPositions(positions: PlayerPosition[]) {
+  if (positions.length === 1) {
+    const { lat, lng } = positions[0];
+    const delta = 0.004; // ~400m de margen para un solo jugador
+    return latLngBounds([lat - delta, lng - delta], [lat + delta, lng + delta]);
+  }
+  return latLngBounds(positions.map((position) => [position.lat, position.lng]));
+}
+
 function FitToPositions({ positions }: { positions: PlayerPosition[] }) {
   const map = useMap();
   const hasFitOnce = useRef(false);
@@ -23,15 +33,11 @@ function FitToPositions({ positions }: { positions: PlayerPosition[] }) {
     if (hasFitOnce.current || positions.length === 0) return;
     hasFitOnce.current = true;
 
-    if (positions.length === 1) {
-      map.setView([positions[0].lat, positions[0].lng], 16);
-      return;
-    }
-
-    map.fitBounds(
-      positions.map((position) => [position.lat, position.lng]),
-      { padding: [40, 40] }
-    );
+    const bounds = boundsForPositions(positions);
+    map.fitBounds(bounds, { padding: [40, 40] });
+    // Limita el pan/zoom a la zona de la partida (+ margen), en vez de
+    // dejar navegar el mapa mundial entero.
+    map.setMaxBounds(bounds.pad(0.5));
   }, [positions, map]);
 
   return null;
@@ -39,7 +45,12 @@ function FitToPositions({ positions }: { positions: PlayerPosition[] }) {
 
 function MapView({ positions }: { positions: PlayerPosition[] }) {
   return (
-    <MapContainer center={DEFAULT_CENTER} zoom={13} style={{ height: "70vh", width: "100%" }}>
+    <MapContainer
+      center={DEFAULT_CENTER}
+      zoom={13}
+      maxBoundsViscosity={1.0}
+      style={{ height: "70vh", width: "100%" }}
+    >
       <TileLayer
         url={CARTO_VOYAGER_URL}
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
