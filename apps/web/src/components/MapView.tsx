@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet";
-import { latLngBounds } from "leaflet";
+import { MapContainer, TileLayer, CircleMarker, Circle, Tooltip, useMap } from "react-leaflet";
+import { latLng, latLngBounds } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 type PlayerPosition = {
@@ -10,6 +10,8 @@ type PlayerPosition = {
   lat: number;
   lng: number;
 };
+
+type Restriction = { lat: number; lng: number; radiusM: number };
 
 const CARTO_VOYAGER_URL =
   "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
@@ -43,10 +45,37 @@ function FitToPositions({ positions }: { positions: PlayerPosition[] }) {
   return null;
 }
 
-function MapView({ positions }: { positions: PlayerPosition[] }) {
+function FitToRestriction({ restriction }: { restriction: Restriction }) {
+  const map = useMap();
+  const hasFitOnce = useRef(false);
+
+  useEffect(() => {
+    if (hasFitOnce.current) return;
+    hasFitOnce.current = true;
+
+    const bounds = latLng(restriction.lat, restriction.lng).toBounds(restriction.radiusM);
+
+    map.fitBounds(bounds, { padding: [20, 20] });
+    map.setMaxBounds(bounds.pad(0.2));
+  }, [restriction, map]);
+
+  return null;
+}
+
+function MapView({
+  positions,
+  restriction,
+}: {
+  positions: PlayerPosition[];
+  restriction: Restriction | null;
+}) {
+  const initialCenter: [number, number] = restriction
+    ? [restriction.lat, restriction.lng]
+    : DEFAULT_CENTER;
+
   return (
     <MapContainer
-      center={DEFAULT_CENTER}
+      center={initialCenter}
       zoom={13}
       maxBoundsViscosity={1.0}
       style={{ height: "70vh", width: "100%" }}
@@ -55,7 +84,18 @@ function MapView({ positions }: { positions: PlayerPosition[] }) {
         url={CARTO_VOYAGER_URL}
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
-      <FitToPositions positions={positions} />
+      {restriction ? (
+        <>
+          <FitToRestriction restriction={restriction} />
+          <Circle
+            center={[restriction.lat, restriction.lng]}
+            radius={restriction.radiusM}
+            pathOptions={{ color: "#185FA5", weight: 2, fillOpacity: 0.05 }}
+          />
+        </>
+      ) : (
+        <FitToPositions positions={positions} />
+      )}
       {positions.map((position) => (
         <CircleMarker
           key={position.entityId}

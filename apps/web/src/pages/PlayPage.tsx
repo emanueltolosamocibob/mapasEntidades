@@ -10,6 +10,18 @@ function PlayPage() {
     sessionByCode.status === "found" ? sessionByCode.session.id : undefined;
   const { positions } = usePositions(sessionId);
 
+  const restriction =
+    sessionByCode.status === "found" &&
+    sessionByCode.session.origin_lat !== null &&
+    sessionByCode.session.origin_lng !== null &&
+    sessionByCode.session.movement_radius_m !== null
+      ? {
+          lat: sessionByCode.session.origin_lat,
+          lng: sessionByCode.session.origin_lng,
+          radiusM: sessionByCode.session.movement_radius_m,
+        }
+      : null;
+
   if (sessionByCode.status === "loading") {
     return (
       <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
@@ -41,7 +53,7 @@ function PlayPage() {
           {sessionByCode.session.name} ({code})
         </h1>
       </div>
-      <MapView positions={positions} />
+      <MapView positions={positions} restriction={restriction} />
     </main>
   );
 }
