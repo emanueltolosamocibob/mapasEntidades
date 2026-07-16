@@ -137,7 +137,13 @@ begin
       select 1 from sessions where id = airsoft_participants.session_id and host_id = auth.uid()
     );
 
-  update airsoft_participants set status = 'kicked' where id = p_participant_id;
+  update airsoft_participants
+  set status = 'kicked'
+  where id = p_participant_id
+    and exists (
+      select 1 from sessions where id = airsoft_participants.session_id and host_id = auth.uid()
+    );
+
   update entities set lifecycle_status = 'removed' where id = v_entity_id;
 end;
 $$;
