@@ -6,6 +6,7 @@ import { useParticipants } from "../hooks/useParticipants";
 import { useCloseSession } from "../hooks/useCloseSession";
 import PendingRequestsList from "../components/PendingRequestsList";
 import AcceptedParticipantsList from "../components/AcceptedParticipantsList";
+import SessionCodeQr from "../components/SessionCodeQr";
 
 function HostPanelPage() {
   const { code } = useParams<{ code: string }>();
@@ -61,6 +62,8 @@ function HostPanelPage() {
       <h1>
         Panel de anfitrión — {sessionByCode.session.name} ({code})
       </h1>
+
+      {!isClosed && code && <SessionCodeQr code={code} size={140} />}
 
       {isClosed ? (
         <p>Esta sesión está cerrada.</p>

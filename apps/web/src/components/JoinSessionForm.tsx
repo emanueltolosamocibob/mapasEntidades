@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useJoinSession } from "../hooks/useJoinSession";
 import { useMyParticipant } from "../hooks/useMyParticipant";
 import { useSession } from "../contexts/SessionContext";
 
 function JoinSessionForm() {
-  const [code, setCode] = useState("");
+  const [searchParams] = useSearchParams();
+  const [code, setCode] = useState(() => searchParams.get("code")?.toUpperCase() ?? "");
   const [nickname, setNickname] = useState("");
   const [joinedCode, setJoinedCode] = useState("");
   const { state, joinSession } = useJoinSession();

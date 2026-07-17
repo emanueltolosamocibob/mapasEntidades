@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { useCreateSession } from "../hooks/useCreateSession";
 import OriginPicker from "./OriginPicker";
+import SessionCodeQr from "./SessionCodeQr";
 
 type Point = { lat: number; lng: number };
 type MovementMode = "free" | "restricted";
@@ -58,7 +59,10 @@ function CreateSessionForm() {
         <p style={{ fontSize: "2rem", fontWeight: "bold", letterSpacing: "0.1em" }}>
           {state.session.code}
         </p>
-        <Link to={`/session/${state.session.code}/host`}>Ir al panel de anfitrión</Link>
+        <SessionCodeQr code={state.session.code} />
+        <p>
+          <Link to={`/session/${state.session.code}/host`}>Ir al panel de anfitrión</Link>
+        </p>
       </div>
     );
   }
