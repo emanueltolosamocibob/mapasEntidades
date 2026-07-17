@@ -4,7 +4,6 @@ import { supabase } from "../lib/supabaseClient";
 type PlayerPosition = {
   entityId: string;
   nickname: string;
-  teamColor: string | null;
   lat: number;
   lng: number;
 };
@@ -17,7 +16,7 @@ export function usePositions(sessionId: string | undefined) {
 
     const { data: participants } = await supabase
       .from("airsoft_participants")
-      .select("entity_id, nickname, airsoft_teams(color)")
+      .select("entity_id, nickname")
       .eq("session_id", sessionId)
       .eq("status", "accepted")
       .not("entity_id", "is", null);
@@ -41,12 +40,10 @@ export function usePositions(sessionId: string | undefined) {
     const merged: PlayerPosition[] = participants.flatMap((p) => {
       const pos = positionByEntity.get(p.entity_id as string);
       if (!pos) return [];
-      const team = p.airsoft_teams as { color: string | null } | null;
       return [
         {
           entityId: p.entity_id as string,
           nickname: p.nickname,
-          teamColor: team?.color ?? null,
           lat: pos.lat,
           lng: pos.lng,
         },

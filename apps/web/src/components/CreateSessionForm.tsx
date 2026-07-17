@@ -72,6 +72,15 @@ function CreateSessionForm() {
     setTeams((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function handleRadiusBlur() {
+    const radius = Number(radiusMeters);
+    if (!Number.isFinite(radius) || radius < RADIUS_MIN || radius > RADIUS_MAX) {
+      setValidationError(`El radio tiene que estar entre ${RADIUS_MIN} y ${RADIUS_MAX} metros.`);
+    } else {
+      setValidationError(null);
+    }
+  }
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setValidationError(null);
@@ -204,7 +213,11 @@ function CreateSessionForm() {
               <OriginPicker
                 value={origin}
                 onChange={setOrigin}
-                radiusMeters={Number(radiusMeters) || 0}
+                radiusMeters={
+                  Number(radiusMeters) > 0
+                    ? Math.min(Math.max(Number(radiusMeters), RADIUS_MIN), RADIUS_MAX)
+                    : 0
+                }
               />
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Restringir a</span>
@@ -214,6 +227,7 @@ function CreateSessionForm() {
                   max={RADIUS_MAX}
                   value={radiusMeters}
                   onChange={(event) => setRadiusMeters(event.target.value)}
+                  onBlur={handleRadiusBlur}
                   className="w-24"
                 />
                 <span className="text-muted-foreground">metros</span>

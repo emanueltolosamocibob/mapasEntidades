@@ -1,13 +1,14 @@
-import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, CircleMarker, Circle, Tooltip, useMap } from "react-leaflet";
-import { latLng, latLngBounds } from "leaflet";
+import { useEffect, useRef, useState } from "react";
+import { MapContainer, TileLayer, Circle, Marker, useMap, useMapEvents } from "react-leaflet";
+import { latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
+import { Minus, Plus } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
+import { playerMarkerIcon } from "../lib/tacticalIcon";
 
 type PlayerPosition = {
   entityId: string;
   nickname: string;
-  teamColor: string | null;
   lat: number;
   lng: number;
 };
@@ -19,6 +20,8 @@ const CARTO_DARK_URL =
 
 const DEFAULT_CENTER: [number, number] = [-34.6037, -58.3816];
 const MAX_ZOOM = 20;
+const POSITIONS_FIT_PADDING: [number, number] = [40, 40];
+const RESTRICTION_FIT_PADDING: [number, number] = [50, 50];
 
 function boundsForPositions(positions: PlayerPosition[]) {
   if (positions.length === 1) {
@@ -29,6 +32,34 @@ function boundsForPositions(positions: PlayerPosition[]) {
   return latLngBounds(positions.map((position) => [position.lat, position.lng]));
 }
 
+// Misma referencia de "área de la partida" que usan FitToPositions y
+// FitToRestriction para su fitBounds inicial — reutilizada acá para
+// calcular el 100% del indicador de zoom sin depender de setMinZoom
+// (que en modo libre no se llama, ver nota en FitToPositions).
+function getFitReference(
+  positions: PlayerPosition[],
+  restriction: Restriction | null
+): { bounds: LatLngBounds; padding: [number, number] } | null {
+  if (restriction) {
+    return {
+      bounds: latLng(restriction.lat, restriction.lng).toBounds(restriction.radiusM),
+      padding: RESTRICTION_FIT_PADDING,
+    };
+  }
+  if (positions.length > 0) {
+    return { bounds: boundsForPositions(positions), padding: POSITIONS_FIT_PADDING };
+  }
+  return null;
+}
+
+function isOutOfBounds(position: PlayerPosition, restriction: Restriction | null) {
+  if (!restriction) return false;
+  const distance = latLng(position.lat, position.lng).distanceTo(
+    latLng(restriction.lat, restriction.lng)
+  );
+  return distance > restriction.radiusM;
+}
+
 function FitToPositions({ positions }: { positions: PlayerPosition[] }) {
   const map = useMap();
   const hasFitOnce = useRef(false);
@@ -37,13 +68,11 @@ function FitToPositions({ positions }: { positions: PlayerPosition[] }) {
     if (hasFitOnce.current || positions.length === 0) return;
     hasFitOnce.current = true;
 
+    map.invalidateSize();
     const bounds = boundsForPositions(positions);
-    map.fitBounds(bounds, { padding: [40, 40] });
-    // Limita el pan/zoom a la zona de la partida (+ margen), en vez de
-    // dejar navegar el mapa mundial entero.
-    map.setMaxBounds(bounds.pad(0.5));
-    // Sin esto se puede alejar el zoom hasta cargar el mapa mundial completo.
-    map.setMinZoom(map.getZoom());
+    // Solo el encuadre inicial — sin restricción, "movimiento libre" tiene
+    // que ser realmente libre: sin maxBounds ni minZoom.
+    map.fitBounds(bounds, { padding: POSITIONS_FIT_PADDING, animate: false });
   }, [positions, map]);
 
   return null;
@@ -57,15 +86,76 @@ function FitToRestriction({ restriction }: { restriction: Restriction }) {
     if (hasFitOnce.current) return;
     hasFitOnce.current = true;
 
+    map.invalidateSize();
     const bounds = latLng(restriction.lat, restriction.lng).toBounds(restriction.radiusM);
 
-    map.fitBounds(bounds, { padding: [20, 20] });
-    map.setMaxBounds(bounds.pad(0.2));
+    // animate: false — si no, fitBounds anima el zoom de forma asíncrona
+    // y el getZoom() de abajo lee el valor viejo, antes de que termine.
+    map.fitBounds(bounds, { padding: RESTRICTION_FIT_PADDING, animate: false });
+    // Padding extra (además del de arriba) para que al acercar el zoom al
+    // máximo siga habiendo margen para pasear por todo el círculo, no solo
+    // por el centro.
+    map.setMaxBounds(bounds.pad(0.6));
     // Sin esto se puede alejar el zoom hasta cargar el mapa mundial completo.
     map.setMinZoom(map.getZoom());
   }, [restriction, map]);
 
   return null;
+}
+
+function TacticalZoomControl({
+  positions,
+  restriction,
+}: {
+  positions: PlayerPosition[];
+  restriction: Restriction | null;
+}) {
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
+
+  useEffect(() => setZoom(map.getZoom()), [positions, restriction, map]);
+
+  // Zoom manual (botones +/- de acá abajo) dispara 'zoomend' normal.
+  useMapEvents({
+    zoomend: () => setZoom(map.getZoom()),
+  });
+
+  const fitRef = getFitReference(positions, restriction);
+  const baselineZoom = fitRef
+    ? map.getBoundsZoom(fitRef.bounds, false, point(fitRef.padding[0], fitRef.padding[1]))
+    : zoom;
+  const percent = Math.round(2 ** (zoom - baselineZoom) * 100);
+
+  const minZoom = map.getMinZoom();
+  const maxZoom = map.getMaxZoom();
+  const atMin = zoom <= minZoom;
+  const atMax = zoom >= maxZoom;
+
+  return (
+    <div className="absolute top-3 left-3 z-[1000] flex items-center border border-primary bg-background/90 text-primary">
+      <button
+        type="button"
+        onClick={() => map.zoomOut()}
+        disabled={atMin}
+        aria-label="Alejar zoom"
+        className="flex h-9 w-9 items-center justify-center hover:bg-primary/10 disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-transparent"
+      >
+        <Minus className="h-4 w-4" />
+      </button>
+      <span className="border-x border-primary px-2 text-xs tracking-[0.15em] whitespace-nowrap">
+        Zoom {percent}%
+      </span>
+      <button
+        type="button"
+        onClick={() => map.zoomIn()}
+        disabled={atMax}
+        aria-label="Acercar zoom"
+        className="flex h-9 w-9 items-center justify-center hover:bg-primary/10 disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-transparent"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  );
 }
 
 function MapView({
@@ -85,6 +175,7 @@ function MapView({
       zoom={13}
       maxZoom={MAX_ZOOM}
       maxBoundsViscosity={1.0}
+      zoomControl={false}
       style={{ height: "70vh", width: "100%" }}
     >
       <TileLayer
@@ -106,21 +197,13 @@ function MapView({
         <FitToPositions positions={positions} />
       )}
       {positions.map((position) => (
-        <CircleMarker
+        <Marker
           key={position.entityId}
-          center={[position.lat, position.lng]}
-          radius={8}
-          pathOptions={{
-            color: position.teamColor ?? "#333",
-            fillColor: position.teamColor ?? "#333",
-            fillOpacity: 1,
-          }}
-        >
-          <Tooltip permanent direction="top" offset={[0, -8]}>
-            {position.nickname}
-          </Tooltip>
-        </CircleMarker>
+          position={[position.lat, position.lng]}
+          icon={playerMarkerIcon(position.nickname, isOutOfBounds(position, restriction))}
+        />
       ))}
+      <TacticalZoomControl positions={positions} restriction={restriction} />
       <RecenterButton />
     </MapContainer>
   );

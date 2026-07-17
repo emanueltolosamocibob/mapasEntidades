@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useSession } from "../contexts/SessionContext";
 import { useSessionByCode } from "../hooks/useSessionByCode";
@@ -11,6 +11,7 @@ import PendingRequestsList from "../components/PendingRequestsList";
 import AcceptedParticipantsList from "../components/AcceptedParticipantsList";
 import SessionCodeQr from "../components/SessionCodeQr";
 import TacticalPanel from "../components/TacticalPanel";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function CenteredMessage({ children }: { children: ReactNode }) {
   return (
@@ -30,6 +31,7 @@ function HostPanelPage() {
   const teams = useAirsoftTeams(sessionId);
   const { participants } = useParticipants(sessionId);
   const { closeSession, loading: closing, error: closeError } = useCloseSession();
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   if (sessionByCode.status === "loading") {
     return <CenteredMessage>Cargando sesión...</CenteredMessage>;
@@ -59,14 +61,22 @@ function HostPanelPage() {
   const isClosed = isSessionClosed(sessionByCode.session);
   const currentSessionId = sessionByCode.session.id;
 
-  async function handleCloseSession() {
-    if (!window.confirm("¿Estás seguro de que querés cerrar la sesión?")) return;
+  async function confirmCloseSession() {
+    setConfirmCloseOpen(false);
     const success = await closeSession(currentSessionId);
     if (success) navigate("/");
   }
 
   return (
     <main className="tactical-grid min-h-svh bg-background px-4 py-10 text-foreground sm:px-8">
+      <ConfirmDialog
+        open={confirmCloseOpen}
+        title="Cerrar sesión"
+        message="¿Estás seguro de que querés cerrar la sesión? Esto termina la partida para todos los jugadores."
+        confirmLabel="Cerrar sesión"
+        onConfirm={confirmCloseSession}
+        onCancel={() => setConfirmCloseOpen(false)}
+      />
       <div className="mx-auto max-w-3xl">
         <header className="mb-8 flex flex-wrap items-start justify-between gap-6 border-b border-border pb-6">
           <div>
@@ -82,7 +92,12 @@ function HostPanelPage() {
               {isClosed ? (
                 <p className="text-sm text-muted-foreground">Esta sesión está cerrada.</p>
               ) : (
-                <Button type="button" variant="outline" disabled={closing} onClick={handleCloseSession}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={closing}
+                  onClick={() => setConfirmCloseOpen(true)}
+                >
                   {closing ? "Cerrando..." : "Cerrar sesión"}
                 </Button>
               )}

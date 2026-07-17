@@ -17,14 +17,20 @@ export function useMyParticipant(
   const refresh = useCallback(async () => {
     if (!sessionId || !userId) return;
 
+    // Un mismo user_id puede tener más de una fila en la sesión con el
+    // tiempo (ej. salió y volvió a pedir ingreso) — status='kicked' de la
+    // vez anterior no bloquea un nuevo pending por el índice único parcial.
+    // .maybeSingle() rompía con "multiple rows returned" en ese caso;
+    // acá nos quedamos con la más reciente.
     const { data } = await supabase
       .from("airsoft_participants")
       .select("id, status, entity_id, team_id")
       .eq("session_id", sessionId)
       .eq("user_id", userId)
-      .maybeSingle();
+      .order("requested_at", { ascending: false })
+      .limit(1);
 
-    setParticipant(data ?? null);
+    setParticipant(data?.[0] ?? null);
   }, [sessionId, userId]);
 
   useEffect(() => {

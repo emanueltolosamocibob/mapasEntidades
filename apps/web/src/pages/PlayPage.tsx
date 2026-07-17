@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useSession } from "../contexts/SessionContext";
 import { useSessionByCode } from "../hooks/useSessionByCode";
@@ -6,11 +7,13 @@ import { useMyParticipant } from "../hooks/useMyParticipant";
 import { useSendPosition } from "../hooks/useSendPosition";
 import { useLeaveSession } from "../hooks/useLeaveSession";
 import { useTeamRoster } from "../hooks/useTeamRoster";
+import { useAirsoftTeams } from "../hooks/useAirsoftTeams";
 import { isSessionClosed } from "../lib/sessionStatus";
 import { cn } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import MapView from "../components/MapView";
 import TacticalPanel from "../components/TacticalPanel";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function PlayPage() {
   const { code } = useParams<{ code: string }>();
@@ -22,19 +25,23 @@ function PlayPage() {
   const userId = session.status === "ready" ? session.user.id : undefined;
   const { positions } = usePositions(sessionId);
   const roster = useTeamRoster(sessionId);
+  const teams = useAirsoftTeams(sessionId);
 
   const isClosed =
     sessionByCode.status === "found" && isSessionClosed(sessionByCode.session);
 
   const myParticipant = useMyParticipant(sessionId, userId);
   const isKicked = myParticipant?.status === "kicked";
+  const myTeam = teams.find((team) => team.id === myParticipant?.team_id);
   useSendPosition(
     !isClosed && myParticipant?.status === "accepted" ? myParticipant.entity_id : null
   );
 
   const { leaveSession } = useLeaveSession();
+  const [confirmExitOpen, setConfirmExitOpen] = useState(false);
 
-  async function handleExit() {
+  async function confirmExit() {
+    setConfirmExitOpen(false);
     if (myParticipant?.status === "accepted") {
       await leaveSession(myParticipant.id);
     }
@@ -110,16 +117,24 @@ function PlayPage() {
         <h1 className="truncate text-sm font-bold tracking-wide">
           {sessionByCode.session.name} <span className="text-muted-foreground">({code})</span>
         </h1>
-        <Button variant="outline" size="sm" onClick={handleExit}>
+        <Button variant="outline" size="sm" onClick={() => setConfirmExitOpen(true)}>
           Salir
         </Button>
       </div>
+      <ConfirmDialog
+        open={confirmExitOpen}
+        title="Salir de la sesión"
+        message="¿Estás seguro de que querés salir de la sesión?"
+        confirmLabel="Salir"
+        onConfirm={confirmExit}
+        onCancel={() => setConfirmExitOpen(false)}
+      />
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:p-6">
         <div className="min-w-0 flex-1">
           <MapView positions={positions} restriction={restriction} />
         </div>
         <div className="w-full sm:w-64">
-          <TacticalPanel title="Mi equipo">
+          <TacticalPanel title={myTeam?.name ?? "Mi equipo"}>
             <ul className="space-y-2 text-sm">
               {roster.map((member) => {
                 const hasPosition = positions.some((p) => p.entityId === member.entityId);

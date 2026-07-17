@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 type Session = {
@@ -22,39 +22,55 @@ type SessionByCodeState =
 export function useSessionByCode(code: string | undefined) {
   const [state, setState] = useState<SessionByCodeState>({ status: "loading" });
 
+  const refresh = useCallback(async () => {
+    if (!code) {
+      setState({ status: "not-found" });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("sessions")
+      .select(
+        "id, code, name, host_id, status, expires_at, origin_lat, origin_lng, movement_radius_m"
+      )
+      .eq("code", code)
+      .maybeSingle();
+
+    if (error) {
+      setState({ status: "error", message: error.message });
+      return;
+    }
+    if (!data) {
+      setState({ status: "not-found" });
+      return;
+    }
+    setState({ status: "found", session: data });
+  }, [code]);
+
   useEffect(() => {
     if (!code) {
       setState({ status: "not-found" });
       return;
     }
 
-    let cancelled = false;
     setState({ status: "loading" });
+    refresh();
 
-    supabase
-      .from("sessions")
-      .select(
-        "id, code, name, host_id, status, expires_at, origin_lat, origin_lng, movement_radius_m"
+    // Sin esto, un jugador ya en /play no se entera si el anfitrión
+    // cierra la sesión hasta que recargue la página a mano.
+    const channel = supabase
+      .channel(`session:${code}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions", filter: `code=eq.${code}` },
+        () => refresh()
       )
-      .eq("code", code)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          setState({ status: "error", message: error.message });
-          return;
-        }
-        if (!data) {
-          setState({ status: "not-found" });
-          return;
-        }
-        setState({ status: "found", session: data });
-      });
+      .subscribe();
 
     return () => {
-      cancelled = true;
+      supabase.removeChannel(channel);
     };
-  }, [code]);
+  }, [code, refresh]);
 
   return state;
 }

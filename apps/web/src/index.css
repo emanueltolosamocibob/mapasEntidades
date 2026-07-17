@@ -83,10 +83,18 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground uppercase;
   }
   html {
     @apply font-sans;
+  }
+  /* button/input/select/textarea no heredan text-transform del body por
+     default del navegador — hay que pedírselo explícito. */
+  button,
+  input,
+  select,
+  textarea {
+    @apply uppercase;
   }
 }
 
@@ -133,4 +141,16 @@ body {
   background: var(--card) !important;
   color: var(--muted-foreground) !important;
   opacity: 0.6;
+}
+
+/* Marca de agua de atribución: se mantiene (OSM/CARTO lo piden en sus
+   términos de uso del tile gratuito) pero con tono oscuro acorde al tema. */
+.leaflet-control-attribution {
+  background: color-mix(in oklch, var(--card) 85%, transparent) !important;
+  color: var(--muted-foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+}
+.leaflet-control-attribution a {
+  color: var(--primary) !important;
 }

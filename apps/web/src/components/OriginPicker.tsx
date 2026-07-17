@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from "react-leaflet";
+import { latLng } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { originMarkerIcon } from "../lib/tacticalIcon";
+import { originDotIcon, myLocationDotIcon } from "../lib/tacticalIcon";
 import RecenterButton from "./RecenterButton";
 
 const CARTO_DARK_URL =
@@ -20,7 +21,7 @@ function ClickToPlace({ onPick }: { onPick: (point: Point) => void }) {
   return null;
 }
 
-function CenterOnMyLocation() {
+function CenterOnMyLocation({ onLocate }: { onLocate: (point: Point) => void }) {
   const map = useMap();
   const done = useRef(false);
 
@@ -28,9 +29,23 @@ function CenterOnMyLocation() {
     if (done.current || !navigator.geolocation) return;
     done.current = true;
     navigator.geolocation.getCurrentPosition((position) => {
-      map.setView([position.coords.latitude, position.coords.longitude], map.getZoom());
+      const point = { lat: position.coords.latitude, lng: position.coords.longitude };
+      map.setView([point.lat, point.lng], map.getZoom());
+      onLocate(point);
     });
-  }, [map]);
+  }, [map, onLocate]);
+
+  return null;
+}
+
+function FitCircle({ center, radiusM }: { center: Point; radiusM: number }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (radiusM <= 0) return;
+    const bounds = latLng(center.lat, center.lng).toBounds(radiusM * 2);
+    map.fitBounds(bounds, { padding: [30, 30], animate: false });
+  }, [center.lat, center.lng, radiusM, map]);
 
   return null;
 }
@@ -44,6 +59,8 @@ function OriginPicker({
   onChange: (point: Point) => void;
   radiusMeters: number;
 }) {
+  const [myLocation, setMyLocation] = useState<Point | null>(null);
+
   return (
     <div>
       <p className="mb-2 text-xs text-muted-foreground">
@@ -62,20 +79,26 @@ function OriginPicker({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           />
           <ClickToPlace onPick={onChange} />
-          {!value && <CenterOnMyLocation />}
+          {!value && <CenterOnMyLocation onLocate={setMyLocation} />}
+          {myLocation && (
+            <Marker position={[myLocation.lat, myLocation.lng]} icon={myLocationDotIcon()} />
+          )}
           {value && (
             <>
-              <Marker position={[value.lat, value.lng]} icon={originMarkerIcon()} />
+              <Marker position={[value.lat, value.lng]} icon={originDotIcon()} />
               {radiusMeters > 0 && (
-                <Circle
-                  center={[value.lat, value.lng]}
-                  radius={radiusMeters}
-                  pathOptions={{ color: "#F5A623", weight: 2, fillOpacity: 0.05 }}
-                />
+                <>
+                  <FitCircle center={value} radiusM={radiusMeters} />
+                  <Circle
+                    center={[value.lat, value.lng]}
+                    radius={radiusMeters}
+                    pathOptions={{ color: "#F5A623", weight: 2, fillOpacity: 0.05 }}
+                  />
+                </>
               )}
             </>
           )}
-          <RecenterButton />
+          <RecenterButton onLocate={setMyLocation} />
         </MapContainer>
       </div>
     </div>
