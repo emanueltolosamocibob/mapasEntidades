@@ -1,11 +1,49 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { useCreateSession } from "../hooks/useCreateSession";
+import { cn } from "../lib/utils";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import OriginPicker from "./OriginPicker";
 import SessionCodeQr from "./SessionCodeQr";
 
 type Point = { lat: number; lng: number };
 type MovementMode = "free" | "restricted";
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <p className="mb-3 flex items-center gap-2 text-xs tracking-[0.2em] text-muted-foreground uppercase">
+      <span className="h-1 w-1 bg-muted-foreground" />
+      {children}
+    </p>
+  );
+}
+
+function ModeOption({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex-1 border px-3 py-2 text-xs tracking-[0.15em] uppercase transition-colors",
+        active
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
 
 function CreateSessionForm() {
   const [name, setName] = useState("");
@@ -13,6 +51,8 @@ function CreateSessionForm() {
   const [origin, setOrigin] = useState<Point | null>(null);
   const [movementMode, setMovementMode] = useState<MovementMode>("free");
   const [radiusMeters, setRadiusMeters] = useState("300");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [teamsError, setTeamsError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const { state, createSession } = useCreateSession();
 
@@ -31,9 +71,21 @@ function CreateSessionForm() {
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setValidationError(null);
+    setNameError(null);
+    setTeamsError(null);
 
     const cleanTeams = teams.map((team) => team.trim()).filter(Boolean);
-    if (!name.trim() || cleanTeams.length < 2) return;
+    let hasError = false;
+
+    if (!name.trim()) {
+      setNameError("Ingresá un nombre válido.");
+      hasError = true;
+    }
+    if (cleanTeams.length < 2) {
+      setTeamsError("Ingresá al menos 2 equipos con nombre.");
+      hasError = true;
+    }
+    if (hasError) return;
 
     if (movementMode === "restricted") {
       const radius = Number(radiusMeters);
@@ -54,95 +106,106 @@ function CreateSessionForm() {
 
   if (state.status === "success") {
     return (
-      <div>
-        <p>Sesión creada. Código de acceso:</p>
-        <p style={{ fontSize: "2rem", fontWeight: "bold", letterSpacing: "0.1em" }}>
+      <div className="space-y-4">
+        <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+          Sesión creada — código de acceso
+        </p>
+        <p className="text-3xl font-bold tracking-[0.15em] text-primary">
           {state.session.code}
         </p>
         <SessionCodeQr code={state.session.code} />
-        <p>
-          <Link to={`/session/${state.session.code}/host`}>Ir al panel de anfitrión</Link>
-        </p>
+        <Link
+          to={`/session/${state.session.code}/host`}
+          className="inline-block text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
+        >
+          Ir al panel de anfitrión →
+        </Link>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="session-name">Nombre de la partida</label>
-        <br />
-        <input
-          id="session-name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          required
-        />
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="session-name"
+          className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
+        >
+          Nombre de la partida
+        </Label>
+        <Input id="session-name" value={name} onChange={(event) => setName(event.target.value)} />
+        {nameError && <p className="text-xs text-destructive">{nameError}</p>}
       </div>
 
-      <fieldset>
-        <legend>Equipos (mínimo 2)</legend>
-        {teams.map((team, index) => (
-          <div key={index}>
-            <input
-              value={team}
-              onChange={(event) => updateTeam(index, event.target.value)}
-              placeholder={`Equipo ${index + 1}`}
-              required
-            />
-            {teams.length > 2 && (
-              <button type="button" onClick={() => removeTeam(index)}>
-                Quitar
-              </button>
-            )}
-          </div>
-        ))}
-        <button type="button" onClick={addTeam}>
+      <div>
+        <SectionLabel>Equipos (mínimo 2)</SectionLabel>
+        <div className="space-y-2">
+          {teams.map((team, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Input
+                value={team}
+                onChange={(event) => updateTeam(index, event.target.value)}
+                placeholder={`Equipo ${index + 1}`}
+              />
+              {teams.length > 2 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeTeam(index)}
+                >
+                  Quitar
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+        {teamsError && <p className="mt-1 text-xs text-destructive">{teamsError}</p>}
+        <Button type="button" variant="outline" size="sm" className="mt-2" onClick={addTeam}>
           + Agregar equipo
-        </button>
-      </fieldset>
+        </Button>
+      </div>
 
-      <fieldset>
-        <legend>Punto de partida y movimiento</legend>
-        <OriginPicker value={origin} onChange={setOrigin} />
+      <div>
+        <SectionLabel>Punto de partida y movimiento</SectionLabel>
+        <div className="space-y-3">
+          <OriginPicker value={origin} onChange={setOrigin} />
 
-        <label>
-          <input
-            type="radio"
-            name="movement-mode"
-            checked={movementMode === "free"}
-            onChange={() => setMovementMode("free")}
-          />
-          Movimiento libre
-        </label>
-        <br />
-        <label>
-          <input
-            type="radio"
-            name="movement-mode"
-            checked={movementMode === "restricted"}
-            onChange={() => setMovementMode("restricted")}
-          />
-          Restringir a
-          <input
-            type="number"
-            min={1}
-            value={radiusMeters}
-            disabled={movementMode !== "restricted"}
-            onChange={(event) => setRadiusMeters(event.target.value)}
-            style={{ width: "5rem", margin: "0 0.3rem" }}
-          />
-          metros a la redonda del punto marcado
-        </label>
-      </fieldset>
+          <div className="flex gap-2">
+            <ModeOption active={movementMode === "free"} onClick={() => setMovementMode("free")}>
+              Movimiento libre
+            </ModeOption>
+            <ModeOption
+              active={movementMode === "restricted"}
+              onClick={() => setMovementMode("restricted")}
+            >
+              Restringir radio
+            </ModeOption>
+          </div>
 
-      <button type="submit" disabled={state.status === "loading"}>
+          {movementMode === "restricted" && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Restringir a</span>
+              <Input
+                type="number"
+                min={1}
+                value={radiusMeters}
+                onChange={(event) => setRadiusMeters(event.target.value)}
+                className="w-20"
+              />
+              <span className="text-muted-foreground">metros</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Button type="submit" disabled={state.status === "loading"} className="w-full">
         {state.status === "loading" ? "Creando..." : "Crear sesión"}
-      </button>
+      </Button>
 
-      {validationError && <p style={{ color: "crimson" }}>{validationError}</p>}
+      {validationError && <p className="text-sm text-destructive">{validationError}</p>}
       {state.status === "error" && (
-        <p style={{ color: "crimson" }}>{state.message}</p>
+        <p className="text-sm text-destructive">{state.message}</p>
       )}
     </form>
   );

@@ -3,12 +3,17 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useJoinSession } from "../hooks/useJoinSession";
 import { useMyParticipant } from "../hooks/useMyParticipant";
 import { useSession } from "../contexts/SessionContext";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 function JoinSessionForm() {
   const [searchParams] = useSearchParams();
   const [code, setCode] = useState(() => searchParams.get("code")?.toUpperCase() ?? "");
   const [nickname, setNickname] = useState("");
   const [joinedCode, setJoinedCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
   const { state, joinSession } = useJoinSession();
   const session = useSession();
   const navigate = useNavigate();
@@ -26,7 +31,20 @@ function JoinSessionForm() {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!code.trim() || !nickname.trim()) return;
+    setCodeError(null);
+    setNicknameError(null);
+
+    let hasError = false;
+    if (!code.trim()) {
+      setCodeError("Ingresá un código válido.");
+      hasError = true;
+    }
+    if (!nickname.trim()) {
+      setNicknameError("Ingresá un nombre válido.");
+      hasError = true;
+    }
+    if (hasError) return;
+
     const normalizedCode = code.trim().toUpperCase();
     setJoinedCode(normalizedCode);
     joinSession(normalizedCode, nickname.trim());
@@ -35,53 +53,63 @@ function JoinSessionForm() {
   if (state.status === "pending") {
     if (myParticipant?.status === "rejected") {
       return (
-        <div>
-          <p>
-            Tu solicitud para unirte como <strong>{state.participant.nickname}</strong> fue
-            rechazada por el anfitrión.
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Tu solicitud para unirte como{" "}
+          <strong className="text-foreground">{state.participant.nickname}</strong> fue
+          rechazada por el anfitrión.
+        </p>
       );
     }
 
     return (
-      <div>
-        <p>
-          Solicitud enviada como <strong>{state.participant.nickname}</strong>.
+      <div className="space-y-2">
+        <p className="text-sm">
+          Solicitud enviada como{" "}
+          <strong className="text-primary">{state.participant.nickname}</strong>.
         </p>
-        <p>Esperando que el anfitrión te acepte y te asigne un equipo...</p>
+        <p className="text-sm text-muted-foreground">
+          Esperando que el anfitrión te acepte y te asigne un equipo...
+        </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="join-code">Código de sesión</label>
-        <br />
-        <input
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="join-code"
+          className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
+        >
+          Código de sesión
+        </Label>
+        <Input
           id="join-code"
           value={code}
           onChange={(event) => setCode(event.target.value)}
-          style={{ textTransform: "uppercase" }}
-          required
+          className="uppercase"
         />
+        {codeError && <p className="text-xs text-destructive">{codeError}</p>}
       </div>
-      <div>
-        <label htmlFor="join-nickname">Nickname</label>
-        <br />
-        <input
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="join-nickname"
+          className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
+        >
+          Nombre
+        </Label>
+        <Input
           id="join-nickname"
           value={nickname}
           onChange={(event) => setNickname(event.target.value)}
-          required
         />
+        {nicknameError && <p className="text-xs text-destructive">{nicknameError}</p>}
       </div>
-      <button type="submit" disabled={state.status === "loading"}>
+      <Button type="submit" disabled={state.status === "loading"} className="w-full">
         {state.status === "loading" ? "Enviando..." : "Unirse"}
-      </button>
+      </Button>
       {state.status === "error" && (
-        <p style={{ color: "crimson" }}>{state.message}</p>
+        <p className="text-sm text-destructive">{state.message}</p>
       )}
     </form>
   );

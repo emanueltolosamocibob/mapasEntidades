@@ -13,8 +13,8 @@ type PlayerPosition = {
 
 type Restriction = { lat: number; lng: number; radiusM: number };
 
-const CARTO_VOYAGER_URL =
-  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const CARTO_DARK_URL =
+  "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
 
 const DEFAULT_CENTER: [number, number] = [-34.6037, -58.3816];
 
@@ -40,6 +40,8 @@ function FitToPositions({ positions }: { positions: PlayerPosition[] }) {
     // Limita el pan/zoom a la zona de la partida (+ margen), en vez de
     // dejar navegar el mapa mundial entero.
     map.setMaxBounds(bounds.pad(0.5));
+    // Sin esto se puede alejar el zoom hasta cargar el mapa mundial completo.
+    map.setMinZoom(map.getZoom());
   }, [positions, map]);
 
   return null;
@@ -57,6 +59,8 @@ function FitToRestriction({ restriction }: { restriction: Restriction }) {
 
     map.fitBounds(bounds, { padding: [20, 20] });
     map.setMaxBounds(bounds.pad(0.2));
+    // Sin esto se puede alejar el zoom hasta cargar el mapa mundial completo.
+    map.setMinZoom(map.getZoom());
   }, [restriction, map]);
 
   return null;
@@ -81,7 +85,7 @@ function MapView({
       style={{ height: "70vh", width: "100%" }}
     >
       <TileLayer
-        url={CARTO_VOYAGER_URL}
+        url={CARTO_DARK_URL}
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
       {restriction ? (
@@ -90,7 +94,7 @@ function MapView({
           <Circle
             center={[restriction.lat, restriction.lng]}
             radius={restriction.radiusM}
-            pathOptions={{ color: "#185FA5", weight: 2, fillOpacity: 0.05 }}
+            pathOptions={{ color: "#F5A623", weight: 2, fillOpacity: 0.05 }}
           />
         </>
       ) : (

@@ -8,14 +8,18 @@ function App() {
   const session = useSession();
 
   if (session.status === "loading") {
-    return <p style={{ fontFamily: "sans-serif", padding: "2rem" }}>Conectando con Supabase...</p>;
+    return (
+      <main className="flex min-h-svh items-center justify-center bg-background text-sm tracking-[0.2em] text-muted-foreground uppercase">
+        Conectando con Supabase...
+      </main>
+    );
   }
 
   if (session.status === "error") {
     return (
-      <p style={{ fontFamily: "sans-serif", padding: "2rem", color: "crimson" }}>
+      <main className="flex min-h-svh items-center justify-center bg-background p-8 text-sm text-destructive">
         Error de conexión: {session.message}
-      </p>
+      </main>
     );
   }
 
