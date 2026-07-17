@@ -90,7 +90,7 @@ function HostPanelPage() {
           {!isClosed && code && <SessionCodeQr code={code} size={120} />}
         </header>
 
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-6">
           <TacticalPanel title="Solicitudes pendientes">
             <PendingRequestsList participants={pendingParticipants} teams={teams} />
           </TacticalPanel>

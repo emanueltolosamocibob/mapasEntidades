@@ -8,6 +8,10 @@ type Team = { id: string; name: string };
 const selectClassName =
   "h-8 border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring disabled:opacity-50";
 
+// Los <option> de un <select> nativo no heredan los colores de Tailwind/CSS
+// vars del <select> en todos los navegadores — hay que fijarlos a mano.
+const optionStyle = { backgroundColor: "var(--popover)", color: "var(--popover-foreground)" };
+
 function PendingRequestsList({
   participants,
   teams,
@@ -42,11 +46,11 @@ function PendingRequestsList({
                 }))
               }
             >
-              <option value="" disabled>
+              <option value="" disabled style={optionStyle}>
                 Elegir equipo
               </option>
               {teams.map((team) => (
-                <option key={team.id} value={team.id}>
+                <option key={team.id} value={team.id} style={optionStyle}>
                   {team.name}
                 </option>
               ))}

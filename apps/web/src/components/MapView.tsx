@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, CircleMarker, Circle, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Circle, Marker, Tooltip, useMap } from "react-leaflet";
 import { latLng, latLngBounds } from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { originMarkerIcon } from "../lib/tacticalIcon";
 
 type PlayerPosition = {
   entityId: string;
@@ -17,6 +18,7 @@ const CARTO_DARK_URL =
   "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
 
 const DEFAULT_CENTER: [number, number] = [-34.6037, -58.3816];
+const MAX_ZOOM = 20;
 
 function boundsForPositions(positions: PlayerPosition[]) {
   if (positions.length === 1) {
@@ -66,6 +68,27 @@ function FitToRestriction({ restriction }: { restriction: Restriction }) {
   return null;
 }
 
+function RecenterOnMe() {
+  const map = useMap();
+
+  function handleClick() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((position) => {
+      map.setView([position.coords.latitude, position.coords.longitude], map.getZoom());
+    });
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="absolute right-3 bottom-3 z-[1000] border border-primary bg-background/90 px-3 py-2 text-xs tracking-[0.15em] text-primary uppercase hover:bg-primary/10"
+    >
+      Centrar en mí
+    </button>
+  );
+}
+
 function MapView({
   positions,
   restriction,
@@ -81,11 +104,14 @@ function MapView({
     <MapContainer
       center={initialCenter}
       zoom={13}
+      maxZoom={MAX_ZOOM}
       maxBoundsViscosity={1.0}
       style={{ height: "70vh", width: "100%" }}
     >
       <TileLayer
+        className="map-tiles-hc"
         url={CARTO_DARK_URL}
+        maxZoom={MAX_ZOOM}
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
       {restriction ? (
@@ -95,6 +121,10 @@ function MapView({
             center={[restriction.lat, restriction.lng]}
             radius={restriction.radiusM}
             pathOptions={{ color: "#F5A623", weight: 2, fillOpacity: 0.05 }}
+          />
+          <Marker
+            position={[restriction.lat, restriction.lng]}
+            icon={originMarkerIcon()}
           />
         </>
       ) : (
@@ -116,6 +146,7 @@ function MapView({
           </Tooltip>
         </CircleMarker>
       ))}
+      <RecenterOnMe />
     </MapContainer>
   );
 }

@@ -98,4 +98,16 @@ body {
       linear-gradient(to bottom, oklch(1 0 0 / 5%) 1px, transparent 1px);
     background-size: 28px 28px;
   }
+
+  /* El tile oscuro de CARTO es muy chato: sube el contraste de calles
+     y edificios sin tocar demasiado el fondo. */
+  .map-tiles-hc {
+    filter: contrast(1.35) brightness(1.2) saturate(1.05);
+  }
+}
+
+/* Leaflet le pone fondo/borde blanco a los divIcon por defecto */
+.tactical-marker-icon {
+  background: transparent !important;
+  border: none !important;
 }

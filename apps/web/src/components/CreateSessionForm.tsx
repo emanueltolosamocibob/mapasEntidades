@@ -11,6 +11,10 @@ import SessionCodeQr from "./SessionCodeQr";
 type Point = { lat: number; lng: number };
 type MovementMode = "free" | "restricted";
 
+const MAX_TEAMS = 10;
+const RADIUS_MIN = 100;
+const RADIUS_MAX = 10000;
+
 function SectionLabel({ children }: { children: string }) {
   return (
     <p className="mb-3 flex items-center gap-2 text-xs tracking-[0.2em] text-muted-foreground uppercase">
@@ -61,7 +65,7 @@ function CreateSessionForm() {
   }
 
   function addTeam() {
-    setTeams((prev) => [...prev, ""]);
+    setTeams((prev) => (prev.length >= MAX_TEAMS ? prev : [...prev, ""]));
   }
 
   function removeTeam(index: number) {
@@ -93,8 +97,10 @@ function CreateSessionForm() {
         setValidationError("Marcá un punto de partida en el mapa para restringir el movimiento.");
         return;
       }
-      if (!Number.isFinite(radius) || radius <= 0) {
-        setValidationError("El radio tiene que ser un número mayor a 0.");
+      if (!Number.isFinite(radius) || radius < RADIUS_MIN || radius > RADIUS_MAX) {
+        setValidationError(
+          `El radio tiene que estar entre ${RADIUS_MIN} y ${RADIUS_MAX} metros.`
+        );
         return;
       }
       createSession(name.trim(), cleanTeams, origin, radius);
@@ -161,18 +167,28 @@ function CreateSessionForm() {
           ))}
         </div>
         {teamsError && <p className="mt-1 text-xs text-destructive">{teamsError}</p>}
-        <Button type="button" variant="outline" size="sm" className="mt-2" onClick={addTeam}>
-          + Agregar equipo
-        </Button>
+        {teams.length >= MAX_TEAMS ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Alcanzaste el máximo de {MAX_TEAMS} equipos.
+          </p>
+        ) : (
+          <Button type="button" variant="outline" size="sm" className="mt-2" onClick={addTeam}>
+            + Agregar equipo
+          </Button>
+        )}
       </div>
 
       <div>
         <SectionLabel>Punto de partida y movimiento</SectionLabel>
         <div className="space-y-3">
-          <OriginPicker value={origin} onChange={setOrigin} />
-
           <div className="flex gap-2">
-            <ModeOption active={movementMode === "free"} onClick={() => setMovementMode("free")}>
+            <ModeOption
+              active={movementMode === "free"}
+              onClick={() => {
+                setMovementMode("free");
+                setOrigin(null);
+              }}
+            >
               Movimiento libre
             </ModeOption>
             <ModeOption
@@ -184,17 +200,21 @@ function CreateSessionForm() {
           </div>
 
           {movementMode === "restricted" && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Restringir a</span>
-              <Input
-                type="number"
-                min={1}
-                value={radiusMeters}
-                onChange={(event) => setRadiusMeters(event.target.value)}
-                className="w-20"
-              />
-              <span className="text-muted-foreground">metros</span>
-            </div>
+            <>
+              <OriginPicker value={origin} onChange={setOrigin} />
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Restringir a</span>
+                <Input
+                  type="number"
+                  min={RADIUS_MIN}
+                  max={RADIUS_MAX}
+                  value={radiusMeters}
+                  onChange={(event) => setRadiusMeters(event.target.value)}
+                  className="w-24"
+                />
+                <span className="text-muted-foreground">metros ({RADIUS_MIN}–{RADIUS_MAX})</span>
+              </div>
+            </>
           )}
         </div>
       </div>

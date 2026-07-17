@@ -1,5 +1,6 @@
-import { MapContainer, TileLayer, CircleMarker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { originMarkerIcon } from "../lib/tacticalIcon";
 
 const CARTO_DARK_URL =
   "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
@@ -37,17 +38,12 @@ function OriginPicker({
           style={{ height: "100%", width: "100%" }}
         >
           <TileLayer
+            className="map-tiles-hc"
             url={CARTO_DARK_URL}
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           />
           <ClickToPlace onPick={onChange} />
-          {value && (
-            <CircleMarker
-              center={[value.lat, value.lng]}
-              radius={8}
-              pathOptions={{ color: "#F5A623", fillColor: "#F5A623", fillOpacity: 1 }}
-            />
-          )}
+          {value && <Marker position={[value.lat, value.lng]} icon={originMarkerIcon()} />}
         </MapContainer>
       </div>
     </div>

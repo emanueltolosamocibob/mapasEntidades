@@ -2,7 +2,14 @@ import { useModerateParticipant } from "../hooks/useModerateParticipant";
 import { Button } from "./ui/button";
 
 type Participant = { id: string; nickname: string; team_id: string | null };
-type Team = { id: string; name: string };
+type Team = { id: string; name: string; color: string | null };
+
+const selectClassName =
+  "h-8 border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring disabled:opacity-50";
+
+// Los <option> de un <select> nativo no heredan los colores de Tailwind/CSS
+// vars del <select> en todos los navegadores — hay que fijarlos a mano.
+const optionStyle = { backgroundColor: "var(--popover)", color: "var(--popover-foreground)" };
 
 function AcceptedParticipantsList({
   participants,
@@ -19,40 +26,67 @@ function AcceptedParticipantsList({
     );
   }
 
+  const byTeam = teams.map((team) => ({
+    team,
+    members: participants.filter((p) => p.team_id === team.id),
+  }));
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <ul className="space-y-3">
-        {participants.map((participant) => (
-          <li
-            key={participant.id}
-            className="flex flex-wrap items-center gap-2 border border-border p-3"
-          >
-            <strong className="mr-auto">{participant.nickname}</strong>
-            <select
-              className="h-8 border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring disabled:opacity-50"
-              value={participant.team_id ?? ""}
-              disabled={pendingId === participant.id}
-              onChange={(event) => reassignTeam(participant.id, event.target.value)}
-            >
-              {teams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={pendingId === participant.id}
-              onClick={() => kick(participant.id)}
-            >
-              Expulsar
-            </Button>
-          </li>
+      <table className="w-full text-sm">
+        {byTeam.map(({ team, members }) => (
+          <tbody key={team.id} className="border-b border-border last:border-0">
+            <tr>
+              <th
+                colSpan={3}
+                className="pt-3 pb-1.5 text-left text-xs tracking-[0.2em] uppercase"
+                style={{ color: team.color ?? undefined }}
+              >
+                {team.name}{" "}
+                <span className="text-muted-foreground normal-case">({members.length})</span>
+              </th>
+            </tr>
+            {members.length === 0 && (
+              <tr>
+                <td colSpan={3} className="pb-3 text-xs text-muted-foreground">
+                  Sin jugadores.
+                </td>
+              </tr>
+            )}
+            {members.map((participant) => (
+              <tr key={participant.id}>
+                <td className="py-1.5 pr-2">{participant.nickname}</td>
+                <td className="py-1.5 pr-2">
+                  <select
+                    className={selectClassName}
+                    value={participant.team_id ?? ""}
+                    disabled={pendingId === participant.id}
+                    onChange={(event) => reassignTeam(participant.id, event.target.value)}
+                  >
+                    {teams.map((t) => (
+                      <option key={t.id} value={t.id} style={optionStyle}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="py-1.5 text-right">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={pendingId === participant.id}
+                    onClick={() => kick(participant.id)}
+                  >
+                    Expulsar
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         ))}
-      </ul>
+      </table>
     </div>
   );
 }

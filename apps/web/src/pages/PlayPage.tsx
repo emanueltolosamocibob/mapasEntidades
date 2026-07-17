@@ -4,6 +4,7 @@ import { useSessionByCode } from "../hooks/useSessionByCode";
 import { usePositions } from "../hooks/usePositions";
 import { useMyParticipant } from "../hooks/useMyParticipant";
 import { useSendPosition } from "../hooks/useSendPosition";
+import { useLeaveSession } from "../hooks/useLeaveSession";
 import { isSessionClosed } from "../lib/sessionStatus";
 import { Button } from "../components/ui/button";
 import MapView from "../components/MapView";
@@ -26,6 +27,15 @@ function PlayPage() {
   useSendPosition(
     !isClosed && myParticipant?.status === "accepted" ? myParticipant.entity_id : null
   );
+
+  const { leaveSession } = useLeaveSession();
+
+  async function handleExit() {
+    if (myParticipant?.status === "accepted") {
+      await leaveSession(myParticipant.id);
+    }
+    navigate("/");
+  }
 
   const restriction =
     sessionByCode.status === "found" &&
@@ -96,7 +106,7 @@ function PlayPage() {
         <h1 className="truncate text-sm font-bold tracking-wide">
           {sessionByCode.session.name} <span className="text-muted-foreground">({code})</span>
         </h1>
-        <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+        <Button variant="outline" size="sm" onClick={handleExit}>
           Salir
         </Button>
       </div>
