@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useModerateParticipant } from "../hooks/useModerateParticipant";
+import { Button } from "./ui/button";
 
 type Participant = { id: string; nickname: string; requested_at: string };
 type Team = { id: string; name: string };
+
+const selectClassName =
+  "h-8 border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring disabled:opacity-50";
 
 function PendingRequestsList({
   participants,
@@ -15,17 +19,21 @@ function PendingRequestsList({
   const [selectedTeam, setSelectedTeam] = useState<Record<string, string>>({});
 
   if (participants.length === 0) {
-    return <p>No hay solicitudes pendientes.</p>;
+    return <p className="text-sm text-muted-foreground">No hay solicitudes pendientes.</p>;
   }
 
   return (
-    <div>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
-      <ul>
+    <div className="space-y-3">
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <ul className="space-y-3">
         {participants.map((participant) => (
-          <li key={participant.id}>
-            <strong>{participant.nickname}</strong>{" "}
+          <li
+            key={participant.id}
+            className="flex flex-wrap items-center gap-2 border border-border p-3"
+          >
+            <strong className="mr-auto">{participant.nickname}</strong>
             <select
+              className={selectClassName}
               value={selectedTeam[participant.id] ?? ""}
               onChange={(event) =>
                 setSelectedTeam((prev) => ({
@@ -42,21 +50,24 @@ function PendingRequestsList({
                   {team.name}
                 </option>
               ))}
-            </select>{" "}
-            <button
+            </select>
+            <Button
               type="button"
+              size="sm"
               disabled={!selectedTeam[participant.id] || pendingId === participant.id}
               onClick={() => accept(participant.id, selectedTeam[participant.id])}
             >
               Aceptar
-            </button>{" "}
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               disabled={pendingId === participant.id}
               onClick={() => reject(participant.id)}
             >
               Rechazar
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
