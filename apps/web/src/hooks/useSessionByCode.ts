@@ -7,6 +7,7 @@ type Session = {
   name: string;
   host_id: string;
   status: string;
+  expires_at: string;
   origin_lat: number | null;
   origin_lng: number | null;
   movement_radius_m: number | null;
@@ -32,7 +33,9 @@ export function useSessionByCode(code: string | undefined) {
 
     supabase
       .from("sessions")
-      .select("id, code, name, host_id, status, origin_lat, origin_lng, movement_radius_m")
+      .select(
+        "id, code, name, host_id, status, expires_at, origin_lat, origin_lng, movement_radius_m"
+      )
       .eq("code", code)
       .maybeSingle()
       .then(({ data, error }) => {

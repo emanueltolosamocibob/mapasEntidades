@@ -4,6 +4,7 @@ import { useSessionByCode } from "../hooks/useSessionByCode";
 import { useAirsoftTeams } from "../hooks/useAirsoftTeams";
 import { useParticipants } from "../hooks/useParticipants";
 import { useCloseSession } from "../hooks/useCloseSession";
+import { isSessionClosed } from "../lib/sessionStatus";
 import PendingRequestsList from "../components/PendingRequestsList";
 import AcceptedParticipantsList from "../components/AcceptedParticipantsList";
 import SessionCodeQr from "../components/SessionCodeQr";
@@ -55,7 +56,7 @@ function HostPanelPage() {
 
   const pendingParticipants = participants.filter((p) => p.status === "pending");
   const acceptedParticipants = participants.filter((p) => p.status === "accepted");
-  const isClosed = sessionByCode.session.status === "closed";
+  const isClosed = isSessionClosed(sessionByCode.session);
 
   return (
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>

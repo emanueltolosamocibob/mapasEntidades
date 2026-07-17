@@ -4,6 +4,7 @@ import { useSessionByCode } from "../hooks/useSessionByCode";
 import { usePositions } from "../hooks/usePositions";
 import { useMyParticipant } from "../hooks/useMyParticipant";
 import { useSendPosition } from "../hooks/useSendPosition";
+import { isSessionClosed } from "../lib/sessionStatus";
 import MapView from "../components/MapView";
 
 function PlayPage() {
@@ -15,9 +16,12 @@ function PlayPage() {
   const userId = session.status === "ready" ? session.user.id : undefined;
   const { positions } = usePositions(sessionId);
 
+  const isClosed =
+    sessionByCode.status === "found" && isSessionClosed(sessionByCode.session);
+
   const myParticipant = useMyParticipant(sessionId, userId);
   useSendPosition(
-    myParticipant?.status === "accepted" ? myParticipant.entity_id : null
+    !isClosed && myParticipant?.status === "accepted" ? myParticipant.entity_id : null
   );
 
   const restriction =
@@ -52,6 +56,17 @@ function PlayPage() {
     return (
       <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
         <p style={{ color: "crimson" }}>{sessionByCode.message}</p>
+      </main>
+    );
+  }
+
+  if (isClosed) {
+    return (
+      <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
+        <h1>
+          {sessionByCode.session.name} ({code})
+        </h1>
+        <p>Esta sesión está cerrada.</p>
       </main>
     );
   }
