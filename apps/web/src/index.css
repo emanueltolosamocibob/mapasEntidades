@@ -112,3 +112,25 @@ body {
   background: transparent !important;
   border: none !important;
 }
+
+/* Reskin de los controles +/- de Leaflet para que combinen con el tema */
+.leaflet-control-zoom {
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+.leaflet-control-zoom a {
+  background: var(--card) !important;
+  color: var(--primary) !important;
+  border-radius: 0 !important;
+  border-color: var(--border) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: color-mix(in oklch, var(--primary) 15%, var(--card)) !important;
+}
+.leaflet-control-zoom a.leaflet-disabled {
+  background: var(--card) !important;
+  color: var(--muted-foreground) !important;
+  opacity: 0.6;
+}

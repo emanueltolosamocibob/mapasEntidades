@@ -201,7 +201,11 @@ function CreateSessionForm() {
 
           {movementMode === "restricted" && (
             <>
-              <OriginPicker value={origin} onChange={setOrigin} />
+              <OriginPicker
+                value={origin}
+                onChange={setOrigin}
+                radiusMeters={Number(radiusMeters) || 0}
+              />
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Restringir a</span>
                 <Input

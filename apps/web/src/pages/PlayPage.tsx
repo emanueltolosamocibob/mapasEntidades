@@ -5,9 +5,12 @@ import { usePositions } from "../hooks/usePositions";
 import { useMyParticipant } from "../hooks/useMyParticipant";
 import { useSendPosition } from "../hooks/useSendPosition";
 import { useLeaveSession } from "../hooks/useLeaveSession";
+import { useTeamRoster } from "../hooks/useTeamRoster";
 import { isSessionClosed } from "../lib/sessionStatus";
+import { cn } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import MapView from "../components/MapView";
+import TacticalPanel from "../components/TacticalPanel";
 
 function PlayPage() {
   const { code } = useParams<{ code: string }>();
@@ -18,6 +21,7 @@ function PlayPage() {
     sessionByCode.status === "found" ? sessionByCode.session.id : undefined;
   const userId = session.status === "ready" ? session.user.id : undefined;
   const { positions } = usePositions(sessionId);
+  const roster = useTeamRoster(sessionId);
 
   const isClosed =
     sessionByCode.status === "found" && isSessionClosed(sessionByCode.session);
@@ -110,7 +114,31 @@ function PlayPage() {
           Salir
         </Button>
       </div>
-      <MapView positions={positions} restriction={restriction} />
+      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:p-6">
+        <div className="min-w-0 flex-1">
+          <MapView positions={positions} restriction={restriction} />
+        </div>
+        <div className="w-full sm:w-64">
+          <TacticalPanel title="Mi equipo">
+            <ul className="space-y-2 text-sm">
+              {roster.map((member) => {
+                const hasPosition = positions.some((p) => p.entityId === member.entityId);
+                return (
+                  <li key={member.id} className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        hasPosition ? "bg-primary" : "bg-muted-foreground/40"
+                      )}
+                    />
+                    {member.nickname}
+                  </li>
+                );
+              })}
+            </ul>
+          </TacticalPanel>
+        </div>
+      </div>
     </main>
   );
 }
