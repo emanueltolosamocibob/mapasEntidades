@@ -1,14 +1,24 @@
 import { useParams } from "react-router";
+import { useSession } from "../contexts/SessionContext";
 import { useSessionByCode } from "../hooks/useSessionByCode";
 import { usePositions } from "../hooks/usePositions";
+import { useMyParticipant } from "../hooks/useMyParticipant";
+import { useSendPosition } from "../hooks/useSendPosition";
 import MapView from "../components/MapView";
 
 function PlayPage() {
   const { code } = useParams<{ code: string }>();
+  const session = useSession();
   const sessionByCode = useSessionByCode(code);
   const sessionId =
     sessionByCode.status === "found" ? sessionByCode.session.id : undefined;
+  const userId = session.status === "ready" ? session.user.id : undefined;
   const { positions } = usePositions(sessionId);
+
+  const myParticipant = useMyParticipant(sessionId, userId);
+  useSendPosition(
+    myParticipant?.status === "accepted" ? myParticipant.entity_id : null
+  );
 
   const restriction =
     sessionByCode.status === "found" &&
