@@ -99,10 +99,11 @@ body {
     background-size: 28px 28px;
   }
 
-  /* El tile oscuro de CARTO es muy chato: sube el contraste de calles
-     y edificios sin tocar demasiado el fondo. */
+  /* Hook para ajustar el contraste del tile oscuro de CARTO a mano.
+     Se aplica vía className="map-tiles-hc" en el <TileLayer> de
+     MapView.tsx y OriginPicker.tsx. */
   .map-tiles-hc {
-    filter: contrast(1.35) brightness(1.2) saturate(1.05);
+    filter: none;
   }
 }
 

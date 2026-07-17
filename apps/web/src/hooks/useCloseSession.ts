@@ -12,7 +12,11 @@ export function useCloseSession() {
       p_session_id: sessionId,
     });
     setLoading(false);
-    if (error) setError(error.message);
+    if (error) {
+      setError(error.message);
+      return false;
+    }
+    return true;
   }
 
   return { closeSession, loading, error };

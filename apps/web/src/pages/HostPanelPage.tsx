@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useSession } from "../contexts/SessionContext";
 import { useSessionByCode } from "../hooks/useSessionByCode";
 import { useAirsoftTeams } from "../hooks/useAirsoftTeams";
@@ -22,6 +22,7 @@ function CenteredMessage({ children }: { children: ReactNode }) {
 
 function HostPanelPage() {
   const { code } = useParams<{ code: string }>();
+  const navigate = useNavigate();
   const session = useSession();
   const sessionByCode = useSessionByCode(code);
   const sessionId =
@@ -56,6 +57,13 @@ function HostPanelPage() {
   const pendingParticipants = participants.filter((p) => p.status === "pending");
   const acceptedParticipants = participants.filter((p) => p.status === "accepted");
   const isClosed = isSessionClosed(sessionByCode.session);
+  const currentSessionId = sessionByCode.session.id;
+
+  async function handleCloseSession() {
+    if (!window.confirm("¿Estás seguro de que querés cerrar la sesión?")) return;
+    const success = await closeSession(currentSessionId);
+    if (success) navigate("/");
+  }
 
   return (
     <main className="tactical-grid min-h-svh bg-background px-4 py-10 text-foreground sm:px-8">
@@ -74,12 +82,7 @@ function HostPanelPage() {
               {isClosed ? (
                 <p className="text-sm text-muted-foreground">Esta sesión está cerrada.</p>
               ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={closing}
-                  onClick={() => closeSession(sessionByCode.session.id)}
-                >
+                <Button type="button" variant="outline" disabled={closing} onClick={handleCloseSession}>
                   {closing ? "Cerrando..." : "Cerrar sesión"}
                 </Button>
               )}

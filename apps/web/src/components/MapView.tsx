@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, Circle, Marker, Tooltip, useMap } from "react-leaflet";
 import { latLng, latLngBounds } from "leaflet";
+import { Crosshair } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { originMarkerIcon } from "../lib/tacticalIcon";
 
@@ -82,9 +83,11 @@ function RecenterOnMe() {
     <button
       type="button"
       onClick={handleClick}
-      className="absolute right-3 bottom-3 z-[1000] border border-primary bg-background/90 px-3 py-2 text-xs tracking-[0.15em] text-primary uppercase hover:bg-primary/10"
+      aria-label="Centrar en mi posición"
+      title="Centrar en mi posición"
+      className="absolute right-3 bottom-3 z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
     >
-      Centrar en mí
+      <Crosshair className="h-4 w-4" />
     </button>
   );
 }

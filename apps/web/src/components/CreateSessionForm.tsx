@@ -212,21 +212,21 @@ function CreateSessionForm() {
                   onChange={(event) => setRadiusMeters(event.target.value)}
                   className="w-24"
                 />
-                <span className="text-muted-foreground">metros ({RADIUS_MIN}–{RADIUS_MAX})</span>
+                <span className="text-muted-foreground">metros</span>
               </div>
             </>
           )}
         </div>
       </div>
 
-      <Button type="submit" disabled={state.status === "loading"} className="w-full">
-        {state.status === "loading" ? "Creando..." : "Crear sesión"}
-      </Button>
-
       {validationError && <p className="text-sm text-destructive">{validationError}</p>}
       {state.status === "error" && (
         <p className="text-sm text-destructive">{state.message}</p>
       )}
+
+      <Button type="submit" disabled={state.status === "loading"} className="w-full">
+        {state.status === "loading" ? "Creando..." : "Crear sesión"}
+      </Button>
     </form>
   );
 }

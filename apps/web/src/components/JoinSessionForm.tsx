@@ -105,12 +105,12 @@ function JoinSessionForm() {
         />
         {nicknameError && <p className="text-xs text-destructive">{nicknameError}</p>}
       </div>
-      <Button type="submit" disabled={state.status === "loading"} className="w-full">
-        {state.status === "loading" ? "Enviando..." : "Unirse"}
-      </Button>
       {state.status === "error" && (
         <p className="text-sm text-destructive">{state.message}</p>
       )}
+      <Button type="submit" disabled={state.status === "loading"} className="w-full">
+        {state.status === "loading" ? "Enviando..." : "Unirse"}
+      </Button>
     </form>
   );
 }
