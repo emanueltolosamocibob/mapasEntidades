@@ -1,18 +1,48 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router";
 import { useJoinSession } from "../hooks/useJoinSession";
+import { useMyParticipant } from "../hooks/useMyParticipant";
+import { useSession } from "../contexts/SessionContext";
 
 function JoinSessionForm() {
   const [code, setCode] = useState("");
   const [nickname, setNickname] = useState("");
+  const [joinedCode, setJoinedCode] = useState("");
   const { state, joinSession } = useJoinSession();
+  const session = useSession();
+  const navigate = useNavigate();
+
+  const userId = session.status === "ready" ? session.user.id : undefined;
+  const sessionId =
+    state.status === "pending" ? state.participant.session_id : undefined;
+  const myParticipant = useMyParticipant(sessionId, userId);
+
+  useEffect(() => {
+    if (myParticipant?.status === "accepted") {
+      navigate(`/session/${joinedCode}/play`);
+    }
+  }, [myParticipant?.status, joinedCode, navigate]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!code.trim() || !nickname.trim()) return;
-    joinSession(code.trim().toUpperCase(), nickname.trim());
+    const normalizedCode = code.trim().toUpperCase();
+    setJoinedCode(normalizedCode);
+    joinSession(normalizedCode, nickname.trim());
   }
 
   if (state.status === "pending") {
+    if (myParticipant?.status === "rejected") {
+      return (
+        <div>
+          <p>
+            Tu solicitud para unirte como <strong>{state.participant.nickname}</strong> fue
+            rechazada por el anfitrión.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div>
         <p>
