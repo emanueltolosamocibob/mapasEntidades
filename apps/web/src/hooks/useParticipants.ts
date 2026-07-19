@@ -6,6 +6,7 @@ type Participant = {
   nickname: string;
   status: string;
   team_id: string | null;
+  role: string;
   requested_at: string;
 };
 
@@ -16,7 +17,7 @@ export function useParticipants(sessionId: string | undefined) {
     if (!sessionId) return;
     supabase
       .from("airsoft_participants")
-      .select("id, nickname, status, team_id, requested_at")
+      .select("id, nickname, status, team_id, role, requested_at")
       .eq("session_id", sessionId)
       .order("requested_at", { ascending: true })
       .then(({ data }) => {

@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 type PlayerPosition = {
   entityId: string;
   nickname: string;
+  role: string;
   lat: number;
   lng: number;
 };
@@ -16,7 +17,7 @@ export function usePositions(sessionId: string | undefined) {
 
     const { data: participants } = await supabase
       .from("airsoft_participants")
-      .select("entity_id, nickname")
+      .select("entity_id, nickname, role")
       .eq("session_id", sessionId)
       .eq("status", "accepted")
       .not("entity_id", "is", null);
@@ -44,6 +45,7 @@ export function usePositions(sessionId: string | undefined) {
         {
           entityId: p.entity_id as string,
           nickname: p.nickname,
+          role: p.role,
           lat: pos.lat,
           lng: pos.lng,
         },

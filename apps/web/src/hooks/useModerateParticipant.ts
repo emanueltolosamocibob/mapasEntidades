@@ -47,5 +47,16 @@ export function useModerateParticipant() {
     if (error) setError(error.message);
   }
 
-  return { accept, reject, reassignTeam, kick, pendingId, error };
+  async function assignRole(participantId: string, role: string) {
+    setPendingId(participantId);
+    setError(null);
+    const { error } = await supabase.rpc("assign_role", {
+      p_participant_id: participantId,
+      p_role: role,
+    });
+    setPendingId(null);
+    if (error) setError(error.message);
+  }
+
+  return { accept, reject, reassignTeam, kick, assignRole, pendingId, error };
 }

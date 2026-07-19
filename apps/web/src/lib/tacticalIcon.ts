@@ -30,15 +30,27 @@ export function myLocationDotIcon() {
   });
 }
 
-export function playerMarkerIcon(nickname: string, outOfBounds: boolean) {
+const ROLE_SHAPE_SVG: Record<string, (color: string) => string> = {
+  capitan: (color) =>
+    `<rect x="2" y="2" width="14" height="14" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" />`,
+  radiooperador: (color) =>
+    `<circle cx="9" cy="9" r="8" fill="none" stroke="${color}" stroke-width="2" />`,
+  infanteria: (color) =>
+    `<polygon points="9,1 17,16 1,16" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" />`,
+  sniper: (color) =>
+    `<polygon points="9,1 17,9 9,17 1,9" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" />`,
+};
+
+export function playerMarkerIcon(nickname: string, role: string, outOfBounds: boolean) {
   const color = outOfBounds ? GRAY : AMBER;
-  const label = escapeHtml(nickname);
+  const label = escapeHtml(role === "capitan" ? `${nickname} (CAPITÁN)` : nickname);
+  const shape = (ROLE_SHAPE_SVG[role] ?? ROLE_SHAPE_SVG.infanteria)(color);
 
   return divIcon({
     html: `
       <div style="display:flex;flex-direction:column;align-items:center;width:100px;">
         <span style="font-family:'JetBrains Mono Variable',ui-monospace,monospace;font-size:10px;letter-spacing:0.05em;color:${color};text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.85);margin-bottom:2px;">${label}</span>
-        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><polygon points="9,1 17,16 1,16" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" /></svg>
+        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">${shape}</svg>
       </div>
     `,
     className: "tactical-marker-icon",

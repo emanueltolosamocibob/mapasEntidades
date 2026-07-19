@@ -1,7 +1,7 @@
 import { useModerateParticipant } from "../hooks/useModerateParticipant";
 import { Button } from "./ui/button";
 
-type Participant = { id: string; nickname: string; team_id: string | null };
+type Participant = { id: string; nickname: string; team_id: string | null; role: string };
 type Team = { id: string; name: string; color: string | null };
 
 const selectClassName =
@@ -11,6 +11,13 @@ const selectClassName =
 // vars del <select> en todos los navegadores — hay que fijarlos a mano.
 const optionStyle = { backgroundColor: "var(--popover)", color: "var(--popover-foreground)" };
 
+const ROLE_OPTIONS = [
+  { value: "capitan", label: "Capitán" },
+  { value: "radiooperador", label: "Radiooperador" },
+  { value: "infanteria", label: "Infantería" },
+  { value: "sniper", label: "Sniper" },
+];
+
 function AcceptedParticipantsList({
   participants,
   teams,
@@ -18,7 +25,7 @@ function AcceptedParticipantsList({
   participants: Participant[];
   teams: Team[];
 }) {
-  const { reassignTeam, kick, pendingId, error } = useModerateParticipant();
+  const { reassignTeam, assignRole, kick, pendingId, error } = useModerateParticipant();
 
   if (participants.length === 0) {
     return (
@@ -39,7 +46,7 @@ function AcceptedParticipantsList({
           <tbody key={team.id} className="border-b border-border last:border-0">
             <tr>
               <th
-                colSpan={3}
+                colSpan={4}
                 className="pt-3 pb-1.5 text-left text-xs tracking-[0.2em] uppercase"
                 style={{ color: team.color ?? undefined }}
               >
@@ -49,7 +56,7 @@ function AcceptedParticipantsList({
             </tr>
             {members.length === 0 && (
               <tr>
-                <td colSpan={3} className="pb-3 text-xs text-muted-foreground">
+                <td colSpan={4} className="pb-3 text-xs text-muted-foreground">
                   Sin jugadores.
                 </td>
               </tr>
@@ -67,6 +74,20 @@ function AcceptedParticipantsList({
                     {teams.map((t) => (
                       <option key={t.id} value={t.id} style={optionStyle}>
                         {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="py-1.5 pr-2">
+                  <select
+                    className={selectClassName}
+                    value={participant.role}
+                    disabled={pendingId === participant.id}
+                    onChange={(event) => assignRole(participant.id, event.target.value)}
+                  >
+                    {ROLE_OPTIONS.map((r) => (
+                      <option key={r.value} value={r.value} style={optionStyle}>
+                        {r.label}
                       </option>
                     ))}
                   </select>
