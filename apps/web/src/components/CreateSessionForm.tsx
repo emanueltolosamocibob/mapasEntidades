@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { useCreateSession } from "../hooks/useCreateSession";
+import { usePresetFields } from "../hooks/usePresetFields";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -14,6 +15,13 @@ type MovementMode = "free" | "restricted";
 const MAX_TEAMS = 10;
 const RADIUS_MIN = 100;
 const RADIUS_MAX = 10000;
+
+const selectClassName =
+  "h-9 w-full border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring disabled:opacity-50";
+
+// Los <option> de un <select> nativo no heredan los colores de Tailwind/CSS
+// vars del <select> en todos los navegadores — hay que fijarlos a mano.
+const optionStyle = { backgroundColor: "var(--popover)", color: "var(--popover-foreground)" };
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -59,6 +67,8 @@ function CreateSessionForm() {
   const [teamsError, setTeamsError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const { state, createSession } = useCreateSession();
+  const presetFields = usePresetFields();
+  const [selectedFieldId, setSelectedFieldId] = useState("");
 
   function updateTeam(index: number, value: string) {
     setTeams((prev) => prev.map((team, i) => (i === index ? value : team)));
@@ -210,6 +220,31 @@ function CreateSessionForm() {
 
           {movementMode === "restricted" && (
             <>
+              {presetFields.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+                    Campo predefinido
+                  </Label>
+                  <select
+                    className={selectClassName}
+                    value={selectedFieldId}
+                    onChange={(event) => {
+                      const field = presetFields.find((f) => f.id === event.target.value);
+                      setSelectedFieldId(event.target.value);
+                      if (field) setOrigin({ lat: field.lat, lng: field.lng });
+                    }}
+                  >
+                    <option value="" disabled style={optionStyle}>
+                      Elegir campo
+                    </option>
+                    {presetFields.map((field) => (
+                      <option key={field.id} value={field.id} style={optionStyle}>
+                        {field.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <OriginPicker
                 value={origin}
                 onChange={setOrigin}
