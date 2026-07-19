@@ -9,6 +9,7 @@ import { playerMarkerIcon } from "../lib/tacticalIcon";
 type PlayerPosition = {
   entityId: string;
   nickname: string;
+  role: string;
   lat: number;
   lng: number;
 };
@@ -200,7 +201,11 @@ function MapView({
         <Marker
           key={position.entityId}
           position={[position.lat, position.lng]}
-          icon={playerMarkerIcon(position.nickname, isOutOfBounds(position, restriction))}
+          icon={playerMarkerIcon(
+            position.nickname,
+            position.role,
+            isOutOfBounds(position, restriction)
+          )}
         />
       ))}
       <TacticalZoomControl positions={positions} restriction={restriction} />
