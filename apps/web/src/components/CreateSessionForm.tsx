@@ -206,6 +206,7 @@ function CreateSessionForm() {
               onClick={() => {
                 setMovementMode("free");
                 setOrigin(null);
+                setSelectedFieldId("");
               }}
             >
               Movimiento libre
@@ -247,7 +248,10 @@ function CreateSessionForm() {
               )}
               <OriginPicker
                 value={origin}
-                onChange={setOrigin}
+                onChange={(point) => {
+                  setSelectedFieldId("");
+                  setOrigin(point);
+                }}
                 radiusMeters={
                   Number(radiusMeters) > 0
                     ? Math.min(Math.max(Number(radiusMeters), RADIUS_MIN), RADIUS_MAX)

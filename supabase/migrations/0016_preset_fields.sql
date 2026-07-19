@@ -3,9 +3,9 @@
 -- MAP-21: campos predefinidos (nombre + coordenadas) para elegir
 -- como punto de partida al crear una sesión con radio restringido.
 -- Sin UI de administración: se cargan a mano por SQL. Lectura
--- pública para cualquier usuario autenticado (dato de referencia,
--- no sensible); sin policies de insert/update/delete porque nadie
--- los edita desde el cliente.
+-- pública sin restricción (dato de referencia, no sensible);
+-- sin policies de insert/update/delete porque nadie los edita
+-- desde el cliente.
 -- ============================================================
 
 create table airsoft_preset_fields (
