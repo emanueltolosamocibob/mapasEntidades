@@ -41,6 +41,17 @@ const ROLE_SHAPE_SVG: Record<string, (color: string) => string> = {
     `<polygon points="9,1 17,9 9,17 1,9" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" />`,
 };
 
+export function distanceLabelIcon(distanceM: number) {
+  const label = `${Math.round(distanceM)} M`;
+
+  return divIcon({
+    html: `<span style="font-family:'JetBrains Mono Variable',ui-monospace,monospace;font-size:10px;letter-spacing:0.05em;color:${AMBER};text-shadow:0 1px 2px rgba(0,0,0,0.85),0 0 4px rgba(0,0,0,0.85);white-space:nowrap;">${label}</span>`,
+    className: "tactical-marker-icon",
+    iconSize: [0, 0],
+    iconAnchor: [-6, 6],
+  });
+}
+
 export function playerMarkerIcon(nickname: string, role: string, outOfBounds: boolean) {
   const color = outOfBounds ? GRAY : AMBER;
   const label = escapeHtml(role === "capitan" ? `${nickname} (CAPITÁN)` : nickname);

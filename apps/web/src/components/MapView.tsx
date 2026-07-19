@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Circle, Marker, useMap, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Circle,
+  Marker,
+  Polyline,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import { latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Ruler } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
-import { playerMarkerIcon } from "../lib/tacticalIcon";
+import { playerMarkerIcon, distanceLabelIcon } from "../lib/tacticalIcon";
 
 type PlayerPosition = {
   entityId: string;
@@ -51,6 +59,74 @@ function getFitReference(
     return { bounds: boundsForPositions(positions), padding: POSITIONS_FIT_PADDING };
   }
   return null;
+}
+
+function pairwiseDistances(positions: PlayerPosition[]) {
+  const pairs: { key: string; from: PlayerPosition; to: PlayerPosition; distanceM: number }[] =
+    [];
+
+  for (let i = 0; i < positions.length; i++) {
+    for (let j = i + 1; j < positions.length; j++) {
+      const from = positions[i];
+      const to = positions[j];
+      pairs.push({
+        key: `${from.entityId}:${to.entityId}`,
+        from,
+        to,
+        distanceM: latLng(from.lat, from.lng).distanceTo(latLng(to.lat, to.lng)),
+      });
+    }
+  }
+
+  return pairs;
+}
+
+function DistanceLines({ positions }: { positions: PlayerPosition[] }) {
+  const pairs = pairwiseDistances(positions);
+
+  return (
+    <>
+      {pairs.map(({ key, from, to, distanceM }) => (
+        <Polyline
+          key={key}
+          positions={[
+            [from.lat, from.lng],
+            [to.lat, to.lng],
+          ]}
+          pathOptions={{ color: "#F5A623", weight: 1, dashArray: "4 4", opacity: 0.6 }}
+        >
+          <Marker
+            position={[(from.lat + to.lat) / 2, (from.lng + to.lng) / 2]}
+            icon={distanceLabelIcon(distanceM)}
+            interactive={false}
+          />
+        </Polyline>
+      ))}
+    </>
+  );
+}
+
+function DistanceLinesToggle({
+  enabled,
+  onToggle,
+}: {
+  enabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={enabled}
+      aria-label="Mostrar líneas de distancia"
+      title="Mostrar líneas de distancia"
+      className={`absolute top-3 right-3 z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+        enabled ? "bg-primary/20" : ""
+      }`}
+    >
+      <Ruler className="h-4 w-4" />
+    </button>
+  );
 }
 
 function isOutOfBounds(position: PlayerPosition, restriction: Restriction | null) {
@@ -169,6 +245,7 @@ function MapView({
   const initialCenter: [number, number] = restriction
     ? [restriction.lat, restriction.lng]
     : DEFAULT_CENTER;
+  const [showDistanceLines, setShowDistanceLines] = useState(false);
 
   return (
     <MapContainer
@@ -197,6 +274,7 @@ function MapView({
       ) : (
         <FitToPositions positions={positions} />
       )}
+      {showDistanceLines && <DistanceLines positions={positions} />}
       {positions.map((position) => (
         <Marker
           key={position.entityId}
@@ -209,6 +287,10 @@ function MapView({
         />
       ))}
       <TacticalZoomControl positions={positions} restriction={restriction} />
+      <DistanceLinesToggle
+        enabled={showDistanceLines}
+        onToggle={() => setShowDistanceLines((prev) => !prev)}
+      />
       <RecenterButton />
     </MapContainer>
   );
