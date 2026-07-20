@@ -17,12 +17,12 @@ function CreateOrJoinPage() {
         </header>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          <TacticalPanel title="Crear partida">
-            <CreateSessionForm />
-          </TacticalPanel>
-
           <TacticalPanel title="Unirse a partida">
             <JoinSessionForm />
+          </TacticalPanel>
+
+          <TacticalPanel title="Crear partida">
+            <CreateSessionForm />
           </TacticalPanel>
         </div>
 

@@ -2,6 +2,7 @@ import { divIcon } from "leaflet";
 
 const AMBER = "#F5A623";
 const GRAY = "#8a8f98";
+const RED = "#E5484D"; // mismo tono que --destructive, para equipos enemigos en el replay
 
 function escapeHtml(text: string) {
   return text
@@ -30,6 +31,23 @@ export function myLocationDotIcon() {
   });
 }
 
+// Mismo formato de etiqueta que playerMarkerIcon (nombre arriba del
+// ícono), para el punto de "mi ubicación" al elegir el origen de la
+// partida — pero marcado como "(TÚ)" en vez de un nickname.
+export function myLocationTaggedIcon() {
+  return divIcon({
+    html: `
+      <div style="display:flex;flex-direction:column;align-items:center;width:100px;">
+        <span style="font-family:'JetBrains Mono Variable',ui-monospace,monospace;font-size:10px;letter-spacing:0.05em;color:${AMBER};text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.85);margin-bottom:2px;">(TÚ)</span>
+        <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5" fill="#ffffff" fill-opacity="0.9" stroke="${AMBER}" stroke-width="2" /></svg>
+      </div>
+    `,
+    className: "tactical-marker-icon",
+    iconSize: [100, 28],
+    iconAnchor: [50, 19],
+  });
+}
+
 const ROLE_SHAPE_SVG: Record<string, (color: string) => string> = {
   capitan: (color) =>
     `<rect x="2" y="2" width="14" height="14" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" />`,
@@ -52,8 +70,13 @@ export function distanceLabelIcon(distanceM: number) {
   });
 }
 
-export function playerMarkerIcon(nickname: string, role: string, outOfBounds: boolean) {
-  const color = outOfBounds ? GRAY : AMBER;
+export function playerMarkerIcon(
+  nickname: string,
+  role: string,
+  outOfBounds: boolean,
+  isEnemy = false
+) {
+  const color = outOfBounds ? GRAY : isEnemy ? RED : AMBER;
   const label = escapeHtml(role === "capitan" ? `${nickname} (CAPITÁN)` : nickname);
   const shape = (ROLE_SHAPE_SVG[role] ?? ROLE_SHAPE_SVG.infanteria)(color);
 

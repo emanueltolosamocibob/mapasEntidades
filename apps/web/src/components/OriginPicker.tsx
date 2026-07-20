@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from "react-leaflet";
 import { latLng } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { originDotIcon, myLocationDotIcon } from "../lib/tacticalIcon";
+import { originDotIcon, myLocationTaggedIcon } from "../lib/tacticalIcon";
 import RecenterButton from "./RecenterButton";
 
 const CARTO_DARK_URL =
@@ -40,12 +40,35 @@ function CenterOnMyLocation({ onLocate }: { onLocate: (point: Point) => void }) 
 
 function FitCircle({ center, radiusM }: { center: Point; radiusM: number }) {
   const map = useMap();
+  // Ref en vez de dependencia: reencuadra cuando cambia el radio, pero no
+  // cada vez que se clickea el mapa para mover el punto (eso no debe
+  // recentrar la vista).
+  const centerRef = useRef(center);
+  centerRef.current = center;
 
   useEffect(() => {
     if (radiusM <= 0) return;
-    const bounds = latLng(center.lat, center.lng).toBounds(radiusM * 2);
+    const c = centerRef.current;
+    const bounds = latLng(c.lat, c.lng).toBounds(radiusM * 2);
     map.fitBounds(bounds, { padding: [30, 30], animate: false });
-  }, [center.lat, center.lng, radiusM, map]);
+  }, [radiusM, map]);
+
+  return null;
+}
+
+// Recentra el mapa cuando "signal" cambia (ej. se eligió un campo
+// predefinido) — a diferencia de FitCircle, esto ignora los cambios de
+// "point" en sí (un click en el mapa no debe disparar esto).
+function FlyToPoint({ point, signal }: { point: Point; signal: number }) {
+  const map = useMap();
+  const pointRef = useRef(point);
+  pointRef.current = point;
+
+  useEffect(() => {
+    if (signal === 0) return;
+    const p = pointRef.current;
+    map.setView([p.lat, p.lng], map.getZoom());
+  }, [signal, map]);
 
   return null;
 }
@@ -54,18 +77,19 @@ function OriginPicker({
   value,
   onChange,
   radiusMeters,
+  focusSignal = 0,
 }: {
   value: Point | null;
   onChange: (point: Point) => void;
   radiusMeters: number;
+  focusSignal?: number;
 }) {
   const [myLocation, setMyLocation] = useState<Point | null>(null);
 
   return (
     <div>
       <p className="mb-2 text-xs text-muted-foreground">
-        Tocá el mapa para marcar el punto de partida
-        {value ? "" : " (todavía no marcaste ninguno)"}.
+        Tocá el mapa para marcar el punto de partida.
       </p>
       <div className="relative h-60 border border-border">
         <MapContainer
@@ -81,11 +105,12 @@ function OriginPicker({
           <ClickToPlace onPick={onChange} />
           {!value && <CenterOnMyLocation onLocate={setMyLocation} />}
           {myLocation && (
-            <Marker position={[myLocation.lat, myLocation.lng]} icon={myLocationDotIcon()} />
+            <Marker position={[myLocation.lat, myLocation.lng]} icon={myLocationTaggedIcon()} />
           )}
           {value && (
             <>
               <Marker position={[value.lat, value.lng]} icon={originDotIcon()} />
+              <FlyToPoint point={value} signal={focusSignal} />
               {radiusMeters > 0 && (
                 <>
                   <FitCircle center={value} radiusM={radiusMeters} />
@@ -98,7 +123,7 @@ function OriginPicker({
               )}
             </>
           )}
-          <RecenterButton onLocate={setMyLocation} />
+          <RecenterButton onLocate={setMyLocation} className="top-3 right-3 bottom-auto left-auto" />
         </MapContainer>
       </div>
     </div>

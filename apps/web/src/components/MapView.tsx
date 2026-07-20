@@ -20,6 +20,7 @@ type PlayerPosition = {
   role: string;
   lat: number;
   lng: number;
+  teamId?: string | null;
 };
 
 type Restriction = { lat: number; lng: number; radiusM: number };
@@ -238,9 +239,15 @@ function TacticalZoomControl({
 function MapView({
   positions,
   restriction,
+  myTeamId,
 }: {
   positions: PlayerPosition[];
   restriction: Restriction | null;
+  // Si se pasa, los marcadores de un equipo distinto al propio se pintan
+  // en rojo (replay con varios equipos a la vez). Sin este prop, el mapa
+  // se comporta como siempre (uso en vivo, donde solo se ve el propio
+  // equipo de todos modos).
+  myTeamId?: string | null;
 }) {
   const initialCenter: [number, number] = restriction
     ? [restriction.lat, restriction.lng]
@@ -282,7 +289,8 @@ function MapView({
           icon={playerMarkerIcon(
             position.nickname,
             position.role,
-            isOutOfBounds(position, restriction)
+            isOutOfBounds(position, restriction),
+            myTeamId != null && position.teamId != null && position.teamId !== myTeamId
           )}
         />
       ))}
