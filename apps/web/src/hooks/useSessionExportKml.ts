@@ -21,11 +21,12 @@ export function useSessionExportKml() {
 
     if (error) {
       setState({ status: "error", message: error.message });
-      return;
+      throw new Error(error.message);
     }
 
     const kml = sessionToKml(sessionName, (data ?? []) as PositionHistoryRow[]);
     setState({ status: "success", kml });
+    return kml;
   }
 
   return { state, exportSession };

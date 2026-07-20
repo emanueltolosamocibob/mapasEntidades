@@ -1,12 +1,18 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { Button } from "../components/ui/button";
 import MapView from "../components/MapView";
+import ReplayControls, { type VisibilityMode } from "../components/ReplayControls";
 import TacticalPanel from "../components/TacticalPanel";
 import TeamRoster from "../components/TeamRoster";
 import { useSession } from "../contexts/SessionContext";
 import { useSessionByCode } from "../hooks/useSessionByCode";
+import { useMyParticipant } from "../hooks/useMyParticipant";
+import { useReplayClock } from "../hooks/useReplayClock";
 import { useReplayData } from "../hooks/useReplayData";
+import { useSessionExportKml } from "../hooks/useSessionExportKml";
 import { useSessionRoster } from "../hooks/useSessionRoster";
+import { downloadTextFile } from "../lib/downloadFile";
 import { getPositionsAtTime } from "../lib/replayEngine";
 
 function ReplayPage() {
@@ -14,8 +20,16 @@ function ReplayPage() {
   const session = useSession();
   const sessionByCode = useSessionByCode(code);
   const sessionId = sessionByCode.status === "found" ? sessionByCode.session.id : undefined;
+  const userId = session.status === "ready" ? session.user.id : undefined;
   const replayData = useReplayData(sessionId);
   const rosterState = useSessionRoster(sessionId);
+  const myParticipant = useMyParticipant(sessionId, userId);
+  const { state: exportState, exportSession } = useSessionExportKml();
+  const [visibilityMode, setVisibilityMode] = useState<VisibilityMode>("all");
+
+  const startTime = replayData.status === "ready" ? replayData.tracks.startTime : 0;
+  const endTime = replayData.status === "ready" ? replayData.tracks.endTime : 0;
+  const clock = useReplayClock(startTime, endTime);
 
   if (session.status !== "ready") return null;
 
@@ -59,6 +73,8 @@ function ReplayPage() {
     );
   }
 
+  const currentSession = sessionByCode.session;
+
   const restriction =
     sessionByCode.session.origin_lat !== null &&
     sessionByCode.session.origin_lng !== null &&
@@ -70,8 +86,29 @@ function ReplayPage() {
         }
       : null;
 
-  const positions =
-    replayData.status === "ready" ? getPositionsAtTime(replayData.tracks, replayData.tracks.endTime) : [];
+  const allPositions =
+    replayData.status === "ready" ? getPositionsAtTime(replayData.tracks, clock.currentTime) : [];
+
+  const positions = allPositions.filter((position) => {
+    if (visibilityMode === "team") return position.teamId === myParticipant?.team_id;
+    if (visibilityMode === "me") return position.entityId === myParticipant?.entity_id;
+    return true;
+  });
+
+  async function handleExport() {
+    try {
+      const kml = await exportSession(currentSession.id, currentSession.name);
+      if (kml) {
+        downloadTextFile(
+          `${currentSession.code}.kml`,
+          kml,
+          "application/vnd.google-earth.kml+xml"
+        );
+      }
+    } catch {
+      // el error ya queda reflejado en exportState.message
+    }
+  }
 
   return (
     <main className="min-h-svh bg-background">
@@ -85,7 +122,7 @@ function ReplayPage() {
       </div>
 
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:p-6">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 space-y-4">
           {replayData.status === "loading" && (
             <p className="text-sm text-muted-foreground">Cargando recorrido...</p>
           )}
@@ -93,7 +130,27 @@ function ReplayPage() {
             <p className="text-sm text-destructive">{replayData.message}</p>
           )}
           {replayData.status !== "loading" && replayData.status !== "error" && (
-            <MapView positions={positions} restriction={restriction} />
+            <>
+              <MapView positions={positions} restriction={restriction} />
+              <TacticalPanel title="Reproductor">
+                <ReplayControls
+                  startTime={startTime}
+                  endTime={endTime}
+                  currentTime={clock.currentTime}
+                  isPlaying={clock.isPlaying}
+                  onToggle={clock.toggle}
+                  onSeek={clock.seek}
+                  onSpeedChange={clock.setSpeed}
+                  visibilityMode={visibilityMode}
+                  onVisibilityModeChange={setVisibilityMode}
+                  hasTeam={!!myParticipant?.team_id}
+                  hasSelf={!!myParticipant?.entity_id}
+                  onExport={handleExport}
+                  exporting={exportState.status === "loading"}
+                  exportError={exportState.status === "error" ? exportState.message : null}
+                />
+              </TacticalPanel>
+            </>
           )}
         </div>
         <div className="w-full sm:w-64">
