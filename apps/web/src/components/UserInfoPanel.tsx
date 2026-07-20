@@ -42,8 +42,8 @@ function UserInfoPanel({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-1.5">
+    <div className="flex flex-wrap items-start gap-4">
+      <div className="min-w-0 flex-1 space-y-1.5">
         <Label htmlFor="profile-name" className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
           Nombre
         </Label>
