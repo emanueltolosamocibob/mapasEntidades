@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useJoinSession } from "../hooks/useJoinSession";
 import { useMyParticipant } from "../hooks/useMyParticipant";
+import { useUserProfile } from "../hooks/useUserProfile";
 import { useSession } from "../contexts/SessionContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -19,15 +20,32 @@ function JoinSessionForm() {
   const navigate = useNavigate();
 
   const userId = session.status === "ready" ? session.user.id : undefined;
+  const isAnonymous = session.status === "ready" ? session.isAnonymous : true;
   const sessionId =
     state.status === "pending" ? state.participant.session_id : undefined;
   const myParticipant = useMyParticipant(sessionId, userId);
+
+  const { state: profileState } = useUserProfile(
+    isAnonymous ? undefined : userId,
+    (session.status === "ready" ? (session.user.user_metadata?.full_name as string | undefined) : undefined) ?? null
+  );
 
   useEffect(() => {
     if (myParticipant?.status === "accepted") {
       navigate(`/session/${joinedCode}/play`);
     }
   }, [myParticipant?.status, joinedCode, navigate]);
+
+  const loadedProfileName = profileState.status === "ready" ? profileState.profile.display_name : undefined;
+  const prefilledRef = useRef(false);
+
+  // Precarga el nombre desde el perfil (MAP-34) una sola vez — solo si el
+  // campo sigue vacío, para no pisar lo que el usuario ya haya tipeado.
+  useEffect(() => {
+    if (prefilledRef.current || !loadedProfileName) return;
+    prefilledRef.current = true;
+    setNickname((current) => current || loadedProfileName);
+  }, [loadedProfileName]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();

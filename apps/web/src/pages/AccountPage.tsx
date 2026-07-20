@@ -1,12 +1,17 @@
 import { Link } from "react-router";
 import PastSessionsTable from "../components/PastSessionsTable";
+import StatsPanel from "../components/StatsPanel";
 import TacticalPanel from "../components/TacticalPanel";
+import UserInfoPanel from "../components/UserInfoPanel";
 import { useSession } from "../contexts/SessionContext";
 import { usePastSessions } from "../hooks/usePastSessions";
+import { usePlayStats } from "../hooks/usePlayStats";
 
 function AccountPage() {
   const session = useSession();
   const { state: pastSessions } = usePastSessions();
+  const userId = session.status === "ready" ? session.user.id : undefined;
+  const playStats = usePlayStats(userId);
 
   if (session.status !== "ready") return null;
 
@@ -32,6 +37,27 @@ function AccountPage() {
             {session.user.email}
           </h1>
         </header>
+
+        <TacticalPanel title="Información" className="mb-6">
+          <UserInfoPanel
+            userId={session.user.id}
+            defaultDisplayName={
+              (session.user.user_metadata?.full_name as string | undefined) ??
+              (session.user.user_metadata?.name as string | undefined) ??
+              null
+            }
+          />
+        </TacticalPanel>
+
+        <TacticalPanel title="Estadísticas" className="mb-6">
+          {playStats.status === "loading" && (
+            <p className="text-sm text-muted-foreground">Cargando...</p>
+          )}
+          {playStats.status === "error" && (
+            <p className="text-sm text-destructive">{playStats.message}</p>
+          )}
+          {playStats.status === "ready" && <StatsPanel stats={playStats.stats} />}
+        </TacticalPanel>
 
         <TacticalPanel title="Partidas jugadas">
           {pastSessions.status === "loading" && (
