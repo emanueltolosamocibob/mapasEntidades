@@ -4,6 +4,7 @@ import AccountPage from "./pages/AccountPage";
 import CreateOrJoinPage from "./pages/CreateOrJoinPage";
 import HostPanelPage from "./pages/HostPanelPage";
 import PlayPage from "./pages/PlayPage";
+import ReplayPage from "./pages/ReplayPage";
 
 function App() {
   const session = useSession();
@@ -30,6 +31,7 @@ function App() {
       <Route path="/account" element={<AccountPage />} />
       <Route path="/session/:code/host" element={<HostPanelPage />} />
       <Route path="/session/:code/play" element={<PlayPage />} />
+      <Route path="/session/:code/replay" element={<ReplayPage />} />
     </Routes>
   );
 }

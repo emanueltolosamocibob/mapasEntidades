@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+import { Button } from "./ui/button";
 import type { PastSession } from "../hooks/usePastSessions";
 
 function PastSessionsTable({
@@ -33,7 +35,11 @@ function PastSessionsTable({
             <td className="py-2 pr-2 text-muted-foreground">
               {new Date(session.created_at).toLocaleDateString()}
             </td>
-            <td className="py-2 text-right text-xs text-muted-foreground">Próximamente</td>
+            <td className="py-2 text-right">
+              <Button size="sm" nativeButton={false} render={<Link to={`/session/${session.code}/replay`} />}>
+                Ver Partida
+              </Button>
+            </td>
           </tr>
         ))}
       </tbody>
