@@ -27,3 +27,17 @@ export async function ensureAnonymousSession() {
 
   return data.user;
 }
+
+// "Asciende" la sesión anónima actual a una cuenta de Google sin perder el
+// user_id (ver ARCHITECTURE.md §6.2/§6.5) — el historial ya jugado como
+// anónimo queda asociado automáticamente, sin migración de datos. Requiere
+// "Allow manual linking" habilitado en Supabase Auth (MAP-30).
+export async function linkGoogleAccount(redirectTo: string = window.location.href) {
+  const { error } = await supabase.auth.linkIdentity({
+    provider: "google",
+    options: { redirectTo },
+  });
+  if (error) {
+    throw error;
+  }
+}
