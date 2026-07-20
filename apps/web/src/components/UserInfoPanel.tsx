@@ -4,6 +4,8 @@ import { Label } from "./ui/label";
 import RoleIcon, { ROLE_LABELS } from "./RoleIcon";
 import { useUserProfile } from "../hooks/useUserProfile";
 
+const NAME_MAX_LENGTH = 20;
+
 const selectClassName =
   "h-8 border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring";
 
@@ -35,7 +37,7 @@ function UserInfoPanel({
   }
 
   function handleNameBlur() {
-    const trimmed = name.trim();
+    const trimmed = name.trim().slice(0, NAME_MAX_LENGTH);
     if (trimmed !== (state.status === "ready" ? state.profile.display_name ?? "" : "")) {
       updateProfile({ display_name: trimmed });
     }
@@ -50,12 +52,17 @@ function UserInfoPanel({
         <Input
           id="profile-name"
           value={name}
+          maxLength={NAME_MAX_LENGTH}
           onChange={(event) => setName(event.target.value)}
           onBlur={handleNameBlur}
         />
-        <p className="text-xs text-muted-foreground">
-          Se usa para autocompletar tu nombre al unirte a una partida.
-        </p>
+        {name.length >= NAME_MAX_LENGTH ? (
+          <p className="text-xs text-destructive">Llegaste al máximo de caracteres permitidos.</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Se usa para autocompletar tu nombre al unirte a una partida.
+          </p>
+        )}
       </div>
 
       <div className="space-y-1.5">
