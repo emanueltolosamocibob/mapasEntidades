@@ -41,73 +41,68 @@ function AcceptedParticipantsList({
   return (
     <div className="space-y-4">
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <table className="w-full text-sm">
-        {byTeam.map(({ team, members }) => (
-          <tbody key={team.id} className="border-b border-border last:border-0">
-            <tr>
-              <th
-                colSpan={4}
-                className="pt-3 pb-1.5 text-left text-xs tracking-[0.2em] uppercase"
-                style={{ color: team.color ?? undefined }}
-              >
-                {team.name}{" "}
-                <span className="text-muted-foreground normal-case">({members.length})</span>
-              </th>
-            </tr>
-            {members.length === 0 && (
-              <tr>
-                <td colSpan={4} className="pb-3 text-xs text-muted-foreground">
-                  Sin jugadores.
-                </td>
-              </tr>
-            )}
+      {byTeam.map(({ team, members }) => (
+        <div key={team.id} className="border-b border-border pb-3 last:border-0">
+          <p
+            className="pt-3 pb-1.5 text-xs tracking-[0.2em] uppercase"
+            style={{ color: team.color ?? undefined }}
+          >
+            {team.name} <span className="text-muted-foreground normal-case">({members.length})</span>
+          </p>
+          {members.length === 0 && (
+            <p className="text-xs text-muted-foreground">Sin jugadores.</p>
+          )}
+          <div className="space-y-2">
             {members.map((participant) => (
-              <tr key={participant.id}>
-                <td className="py-1.5 pr-2">{participant.nickname}</td>
-                <td className="py-1.5 pr-2">
-                  <select
-                    className={selectClassName}
-                    value={participant.team_id ?? ""}
-                    disabled={pendingId === participant.id}
-                    onChange={(event) => reassignTeam(participant.id, event.target.value)}
-                  >
-                    {teams.map((t) => (
-                      <option key={t.id} value={t.id} style={optionStyle}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="py-1.5 pr-2">
-                  <select
-                    className={selectClassName}
-                    value={participant.role}
-                    disabled={pendingId === participant.id}
-                    onChange={(event) => assignRole(participant.id, event.target.value)}
-                  >
-                    {ROLE_OPTIONS.map((r) => (
-                      <option key={r.value} value={r.value} style={optionStyle}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="py-1.5 text-right">
+              <div key={participant.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="truncate">{participant.nickname}</span>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase">
+                    Equipo
+                    <select
+                      className={selectClassName}
+                      value={participant.team_id ?? ""}
+                      disabled={pendingId === participant.id}
+                      onChange={(event) => reassignTeam(participant.id, event.target.value)}
+                    >
+                      {teams.map((t) => (
+                        <option key={t.id} value={t.id} style={optionStyle}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase">
+                    Rol
+                    <select
+                      className={selectClassName}
+                      value={participant.role}
+                      disabled={pendingId === participant.id}
+                      onChange={(event) => assignRole(participant.id, event.target.value)}
+                    >
+                      {ROLE_OPTIONS.map((r) => (
+                        <option key={r.value} value={r.value} style={optionStyle}>
+                          {r.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
+                    className="text-destructive hover:text-destructive"
                     disabled={pendingId === participant.id}
                     onClick={() => kick(participant.id)}
                   >
                     Expulsar
                   </Button>
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        ))}
-      </table>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

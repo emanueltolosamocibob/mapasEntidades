@@ -9,10 +9,10 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import { latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
-import { Minus, Plus, Ruler } from "lucide-react";
+import { Minus, Plus, Waypoints } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
-import { playerMarkerIcon, distanceLabelIcon } from "../lib/tacticalIcon";
+import { playerMarkerIcon, distanceLabelIcon, ENEMY_COLOR } from "../lib/tacticalIcon";
 
 type PlayerPosition = {
   entityId: string;
@@ -125,7 +125,7 @@ function DistanceLinesToggle({
         enabled ? "bg-primary/20" : ""
       }`}
     >
-      <Ruler className="h-4 w-4" />
+      <Waypoints className="h-4 w-4" />
     </button>
   );
 }
@@ -236,10 +236,25 @@ function TacticalZoomControl({
   );
 }
 
+function markerColorFor(
+  position: PlayerPosition,
+  myTeamId: string | null | undefined,
+  teamColors: Record<string, string> | undefined
+): string | undefined {
+  if (teamColors && position.teamId && teamColors[position.teamId]) {
+    return teamColors[position.teamId];
+  }
+  if (myTeamId != null && position.teamId != null && position.teamId !== myTeamId) {
+    return ENEMY_COLOR;
+  }
+  return undefined;
+}
+
 function MapView({
   positions,
   restriction,
   myTeamId,
+  teamColors,
 }: {
   positions: PlayerPosition[];
   restriction: Restriction | null;
@@ -248,6 +263,10 @@ function MapView({
   // se comporta como siempre (uso en vivo, donde solo se ve el propio
   // equipo de todos modos).
   myTeamId?: string | null;
+  // Mapa team_id → color explícito — cada equipo con su propio color
+  // (panel de anfitrión, "ver todos los equipos"). Tiene prioridad sobre
+  // la lógica de myTeamId si ambos se pasan.
+  teamColors?: Record<string, string>;
 }) {
   const initialCenter: [number, number] = restriction
     ? [restriction.lat, restriction.lng]
@@ -290,7 +309,7 @@ function MapView({
             position.nickname,
             position.role,
             isOutOfBounds(position, restriction),
-            myTeamId != null && position.teamId != null && position.teamId !== myTeamId
+            markerColorFor(position, myTeamId, teamColors)
           )}
         />
       ))}
@@ -299,7 +318,7 @@ function MapView({
         enabled={showDistanceLines}
         onToggle={() => setShowDistanceLines((prev) => !prev)}
       />
-      <RecenterButton />
+      <RecenterButton className="top-3 right-14 bottom-auto left-auto" />
     </MapContainer>
   );
 }
