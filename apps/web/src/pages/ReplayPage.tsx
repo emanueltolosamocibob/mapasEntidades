@@ -145,7 +145,11 @@ function ReplayPage() {
           )}
           {replayData.status !== "loading" && replayData.status !== "error" && (
             <>
-              <MapView positions={positions} restriction={restriction} />
+              <MapView
+                positions={positions}
+                restriction={restriction}
+                myTeamId={myParticipant?.team_id}
+              />
               <TacticalPanel title="Reproductor">
                 <ReplayControls
                   startTime={startTime}
