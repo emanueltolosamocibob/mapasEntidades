@@ -69,6 +69,7 @@ function CreateSessionForm() {
   const { state, createSession } = useCreateSession();
   const presetFields = usePresetFields();
   const [selectedFieldId, setSelectedFieldId] = useState("");
+  const [focusSignal, setFocusSignal] = useState(0);
 
   function updateTeam(index: number, value: string) {
     setTeams((prev) => prev.map((team, i) => (i === index ? value : team)));
@@ -232,7 +233,10 @@ function CreateSessionForm() {
                     onChange={(event) => {
                       const field = presetFields.find((f) => f.id === event.target.value);
                       setSelectedFieldId(event.target.value);
-                      if (field) setOrigin({ lat: field.lat, lng: field.lng });
+                      if (field) {
+                        setOrigin({ lat: field.lat, lng: field.lng });
+                        setFocusSignal((n) => n + 1);
+                      }
                     }}
                   >
                     <option value="" disabled style={optionStyle}>
@@ -257,6 +261,7 @@ function CreateSessionForm() {
                     ? Math.min(Math.max(Number(radiusMeters), RADIUS_MIN), RADIUS_MAX)
                     : 0
                 }
+                focusSignal={focusSignal}
               />
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Restringir a</span>
