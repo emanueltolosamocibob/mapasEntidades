@@ -16,11 +16,11 @@ function TeamRoster({ roster }: { roster: RosterEntry[] }) {
 
         return (
           <div key={teamId ?? "sin-equipo"}>
-            <p
-              className="mb-1.5 text-xs tracking-[0.2em] uppercase"
-              style={{ color: teamColor }}
-            >
-              {teamName} <span className="text-muted-foreground normal-case">({members.length})</span>
+            <p className="mb-1.5 text-xs tracking-[0.2em] uppercase" style={{ color: teamColor }}>
+              <span className="underline decoration-2 underline-offset-4">{teamName}</span>{" "}
+              <span className="text-muted-foreground normal-case no-underline">
+                ({members.length})
+              </span>
             </p>
             <ul className="space-y-1 text-sm">
               {members.map((member) => (

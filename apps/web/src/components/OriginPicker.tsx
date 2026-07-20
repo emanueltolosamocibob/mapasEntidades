@@ -40,12 +40,18 @@ function CenterOnMyLocation({ onLocate }: { onLocate: (point: Point) => void }) 
 
 function FitCircle({ center, radiusM }: { center: Point; radiusM: number }) {
   const map = useMap();
+  // Ref en vez de dependencia: reencuadra cuando cambia el radio, pero no
+  // cada vez que se clickea el mapa para mover el punto (eso no debe
+  // recentrar la vista).
+  const centerRef = useRef(center);
+  centerRef.current = center;
 
   useEffect(() => {
     if (radiusM <= 0) return;
-    const bounds = latLng(center.lat, center.lng).toBounds(radiusM * 2);
+    const c = centerRef.current;
+    const bounds = latLng(c.lat, c.lng).toBounds(radiusM * 2);
     map.fitBounds(bounds, { padding: [30, 30], animate: false });
-  }, [center.lat, center.lng, radiusM, map]);
+  }, [radiusM, map]);
 
   return null;
 }

@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
+import { DomEvent } from "leaflet";
 import { Crosshair } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -12,6 +14,14 @@ function RecenterButton({
   onLocate?: (point: Point) => void;
 }) {
   const map = useMap();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Sin esto, el click en el botón atraviesa al mapa por debajo (mismo
+  // contenedor DOM) y también dispara el click-to-place del origen —
+  // mismo patrón que usa Leaflet internamente para sus propios controles.
+  useEffect(() => {
+    if (buttonRef.current) DomEvent.disableClickPropagation(buttonRef.current);
+  }, []);
 
   function handleClick() {
     if (!navigator.geolocation) return;
@@ -24,6 +34,7 @@ function RecenterButton({
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={handleClick}
       aria-label="Centrar en mi posición"
