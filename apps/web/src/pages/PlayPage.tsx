@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useSession } from "../contexts/SessionContext";
 import { useSessionByCode } from "../hooks/useSessionByCode";
 import { usePositions } from "../hooks/usePositions";
@@ -32,6 +32,8 @@ function PlayPage() {
 
   const myParticipant = useMyParticipant(sessionId, userId);
   const isKicked = myParticipant?.status === "kicked";
+  const isHost =
+    sessionByCode.status === "found" && userId === sessionByCode.session.host_id;
   const myTeam = teams.find((team) => team.id === myParticipant?.team_id);
   useSendPosition(
     !isClosed && myParticipant?.status === "accepted" ? myParticipant.entity_id : null
@@ -117,9 +119,21 @@ function PlayPage() {
         <h1 className="truncate text-sm font-bold tracking-wide">
           {sessionByCode.session.name} <span className="text-muted-foreground">({code})</span>
         </h1>
-        <Button variant="outline" size="sm" onClick={() => setConfirmExitOpen(true)}>
-          Salir
-        </Button>
+        <div className="flex items-center gap-2">
+          {isHost && (
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={<Link to={`/session/${code}/host`} />}
+            >
+              Volver al panel de anfitrión
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setConfirmExitOpen(true)}>
+            Salir
+          </Button>
+        </div>
       </div>
       <ConfirmDialog
         open={confirmExitOpen}

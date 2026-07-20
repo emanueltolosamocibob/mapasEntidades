@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabaseClient";
 
 type Participant = {
   id: string;
+  entity_id: string | null;
   nickname: string;
   status: string;
   team_id: string | null;
@@ -17,7 +18,7 @@ export function useParticipants(sessionId: string | undefined) {
     if (!sessionId) return;
     supabase
       .from("airsoft_participants")
-      .select("id, nickname, status, team_id, role, requested_at")
+      .select("id, entity_id, nickname, status, team_id, role, requested_at")
       .eq("session_id", sessionId)
       .order("requested_at", { ascending: true })
       .then(({ data }) => {

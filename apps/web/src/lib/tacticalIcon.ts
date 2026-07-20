@@ -2,7 +2,7 @@ import { divIcon } from "leaflet";
 
 const AMBER = "#F5A623";
 const GRAY = "#8a8f98";
-const RED = "#E5484D"; // mismo tono que --destructive, para equipos enemigos en el replay
+export const ENEMY_COLOR = "#E5484D"; // mismo tono que --destructive, para equipos enemigos en el replay
 
 function escapeHtml(text: string) {
   return text
@@ -74,9 +74,9 @@ export function playerMarkerIcon(
   nickname: string,
   role: string,
   outOfBounds: boolean,
-  isEnemy = false
+  colorOverride?: string
 ) {
-  const color = outOfBounds ? GRAY : isEnemy ? RED : AMBER;
+  const color = outOfBounds ? GRAY : (colorOverride ?? AMBER);
   const label = escapeHtml(role === "capitan" ? `${nickname} (CAPITÁN)` : nickname);
   const shape = (ROLE_SHAPE_SVG[role] ?? ROLE_SHAPE_SVG.infanteria)(color);
 
