@@ -154,3 +154,44 @@ body {
 .leaflet-control-attribution a {
   color: var(--primary) !important;
 }
+
+/* Slider táctico (reproductor de replay): bordes rectos, selector
+   como línea en vez del círculo por defecto del navegador. */
+input[type="range"].tactical-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"].tactical-slider:disabled {
+  cursor: not-allowed;
+}
+input[type="range"].tactical-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--input);
+  border: 1px solid var(--border);
+}
+input[type="range"].tactical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 3px;
+  height: 20px;
+  border-radius: 0;
+  background: var(--primary);
+  margin-top: -8px;
+  cursor: pointer;
+}
+input[type="range"].tactical-slider::-moz-range-track {
+  height: 4px;
+  background: var(--input);
+  border: 1px solid var(--border);
+}
+input[type="range"].tactical-slider::-moz-range-thumb {
+  width: 3px;
+  height: 20px;
+  border-radius: 0;
+  border: none;
+  background: var(--primary);
+  cursor: pointer;
+}

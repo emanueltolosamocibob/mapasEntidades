@@ -63,7 +63,7 @@ function PlayPage() {
   if (sessionByCode.status === "loading") {
     return (
       <main className="flex min-h-svh items-center justify-center bg-background p-8 text-sm tracking-[0.2em] text-muted-foreground uppercase">
-        Cargando sesión...
+        Cargando partida...
       </main>
     );
   }
@@ -71,7 +71,7 @@ function PlayPage() {
   if (sessionByCode.status === "not-found") {
     return (
       <main className="flex min-h-svh items-center justify-center bg-background p-8 text-sm text-muted-foreground">
-        Sesión no encontrada (o no tenés permiso para verla).
+        Partida no encontrada (o no tenés permiso para verla).
       </main>
     );
   }
@@ -88,7 +88,7 @@ function PlayPage() {
     return (
       <main className="flex min-h-svh flex-col items-center justify-center gap-4 bg-background p-8 text-center">
         <p className="text-sm text-destructive">
-          Fuiste expulsado de esta sesión por el anfitrión.
+          Fuiste expulsado de esta partida por el anfitrión.
         </p>
         <Button variant="outline" onClick={() => navigate("/")}>
           Volver al inicio
@@ -103,7 +103,7 @@ function PlayPage() {
         <h1 className="text-lg font-bold">
           {sessionByCode.session.name} ({code})
         </h1>
-        <p className="text-sm text-muted-foreground">Esta sesión está cerrada.</p>
+        <p className="text-sm text-muted-foreground">Esta partida está cerrada.</p>
         <Button variant="outline" onClick={() => navigate("/")}>
           Volver al inicio
         </Button>
@@ -123,8 +123,8 @@ function PlayPage() {
       </div>
       <ConfirmDialog
         open={confirmExitOpen}
-        title="Salir de la sesión"
-        message="¿Estás seguro de que querés salir de la sesión?"
+        title="Salir de la partida"
+        message="¿Estás seguro de que querés salir de la partida?"
         confirmLabel="Salir"
         onConfirm={confirmExit}
         onCancel={() => setConfirmExitOpen(false)}

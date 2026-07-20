@@ -133,7 +133,7 @@ function CreateSessionForm() {
     return (
       <div className="space-y-4">
         <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-          Sesión creada — código de acceso
+          Partida creada — código de acceso
         </p>
         <p className="text-3xl font-bold tracking-[0.15em] text-primary">
           {state.session.code}
@@ -282,7 +282,7 @@ function CreateSessionForm() {
       )}
 
       <Button type="submit" disabled={state.status === "loading"} className="w-full">
-        {state.status === "loading" ? "Creando..." : "Crear sesión"}
+        {state.status === "loading" ? "Creando..." : "Crear partida"}
       </Button>
     </form>
   );

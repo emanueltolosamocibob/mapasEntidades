@@ -1,4 +1,5 @@
 import CreateSessionForm from "../components/CreateSessionForm";
+import GoogleAccountPanel from "../components/GoogleAccountPanel";
 import JoinSessionForm from "../components/JoinSessionForm";
 import TacticalPanel from "../components/TacticalPanel";
 
@@ -16,12 +17,18 @@ function CreateOrJoinPage() {
         </header>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          <TacticalPanel title="Crear sesión">
+          <TacticalPanel title="Crear partida">
             <CreateSessionForm />
           </TacticalPanel>
 
-          <TacticalPanel title="Unirse a sesión">
+          <TacticalPanel title="Unirse a partida">
             <JoinSessionForm />
+          </TacticalPanel>
+        </div>
+
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          <TacticalPanel title="Cuenta de Google">
+            <GoogleAccountPanel />
           </TacticalPanel>
         </div>
       </div>

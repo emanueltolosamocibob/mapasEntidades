@@ -34,11 +34,11 @@ function HostPanelPage() {
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   if (sessionByCode.status === "loading") {
-    return <CenteredMessage>Cargando sesión...</CenteredMessage>;
+    return <CenteredMessage>Cargando partida...</CenteredMessage>;
   }
 
   if (sessionByCode.status === "not-found") {
-    return <CenteredMessage>Sesión no encontrada (o no tenés permiso para verla).</CenteredMessage>;
+    return <CenteredMessage>Partida no encontrada (o no tenés permiso para verla).</CenteredMessage>;
   }
 
   if (sessionByCode.status === "error") {
@@ -53,7 +53,7 @@ function HostPanelPage() {
     session.status === "ready" && session.user.id === sessionByCode.session.host_id;
 
   if (!isHost) {
-    return <CenteredMessage>No sos el anfitrión de esta sesión.</CenteredMessage>;
+    return <CenteredMessage>No sos el anfitrión de esta partida.</CenteredMessage>;
   }
 
   const pendingParticipants = participants.filter((p) => p.status === "pending");
@@ -71,9 +71,9 @@ function HostPanelPage() {
     <main className="tactical-grid min-h-svh bg-background px-4 py-10 text-foreground sm:px-8">
       <ConfirmDialog
         open={confirmCloseOpen}
-        title="Cerrar sesión"
-        message="¿Estás seguro de que querés cerrar la sesión? Esto termina la partida para todos los jugadores."
-        confirmLabel="Cerrar sesión"
+        title="Cerrar partida"
+        message="¿Estás seguro de que querés cerrar la partida? Esto termina la partida para todos los jugadores."
+        confirmLabel="Cerrar partida"
         onConfirm={confirmCloseSession}
         onCancel={() => setConfirmCloseOpen(false)}
       />
@@ -90,7 +90,7 @@ function HostPanelPage() {
 
             <div className="mt-4">
               {isClosed ? (
-                <p className="text-sm text-muted-foreground">Esta sesión está cerrada.</p>
+                <p className="text-sm text-muted-foreground">Esta partida está cerrada.</p>
               ) : (
                 <Button
                   type="button"
@@ -98,7 +98,7 @@ function HostPanelPage() {
                   disabled={closing}
                   onClick={() => setConfirmCloseOpen(true)}
                 >
-                  {closing ? "Cerrando..." : "Cerrar sesión"}
+                  {closing ? "Cerrando..." : "Cerrar partida"}
                 </Button>
               )}
               {closeError && <p className="mt-2 text-sm text-destructive">{closeError}</p>}
