@@ -7,11 +7,20 @@ import { useSession } from "../contexts/SessionContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import RoleIcon, { ROLE_LABELS } from "./RoleIcon";
+
+const selectClassName =
+  "h-8 border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring";
+
+// Los <option> de un <select> nativo no heredan los colores de Tailwind/CSS
+// vars del <select> en todos los navegadores — hay que fijarlos a mano.
+const optionStyle = { backgroundColor: "var(--popover)", color: "var(--popover-foreground)" };
 
 function JoinSessionForm() {
   const [searchParams] = useSearchParams();
   const [code, setCode] = useState(() => searchParams.get("code")?.toUpperCase() ?? "");
   const [nickname, setNickname] = useState("");
+  const [role, setRole] = useState("infanteria");
   const [joinedCode, setJoinedCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [nicknameError, setNicknameError] = useState<string | null>(null);
@@ -47,6 +56,17 @@ function JoinSessionForm() {
     setNickname((current) => current || loadedProfileName);
   }, [loadedProfileName]);
 
+  const loadedProfileRole = profileState.status === "ready" ? profileState.profile.preferred_role : undefined;
+  const roleInitializedRef = useRef(false);
+
+  // Precarga el rol preferido del perfil una sola vez — si no tiene perfil
+  // (anónimo o todavía sin guardar uno), se queda en el default "infanteria".
+  useEffect(() => {
+    if (roleInitializedRef.current || !loadedProfileRole) return;
+    roleInitializedRef.current = true;
+    setRole(loadedProfileRole);
+  }, [loadedProfileRole]);
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setCodeError(null);
@@ -65,7 +85,7 @@ function JoinSessionForm() {
 
     const normalizedCode = code.trim().toUpperCase();
     setJoinedCode(normalizedCode);
-    joinSession(normalizedCode, nickname.trim());
+    joinSession(normalizedCode, nickname.trim(), role);
   }
 
   if (state.status === "pending") {
@@ -122,6 +142,29 @@ function JoinSessionForm() {
           onChange={(event) => setNickname(event.target.value)}
         />
         {nicknameError && <p className="text-xs text-destructive">{nicknameError}</p>}
+      </div>
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="join-role"
+          className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
+        >
+          Rol preferido
+        </Label>
+        <div className="flex items-center gap-2">
+          <select
+            id="join-role"
+            className={selectClassName}
+            value={role}
+            onChange={(event) => setRole(event.target.value)}
+          >
+            {Object.entries(ROLE_LABELS).map(([value, label]) => (
+              <option key={value} value={value} style={optionStyle}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <RoleIcon role={role} className="text-primary" />
+        </div>
       </div>
       {state.status === "error" && (
         <p className="text-sm text-destructive">{state.message}</p>
