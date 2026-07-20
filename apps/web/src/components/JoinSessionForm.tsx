@@ -81,7 +81,7 @@ function JoinSessionForm() {
           htmlFor="join-code"
           className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
         >
-          Código de sesión
+          Código de partida
         </Label>
         <Input
           id="join-code"

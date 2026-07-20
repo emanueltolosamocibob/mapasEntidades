@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router";
 import { useSession } from "./contexts/SessionContext";
+import AccountPage from "./pages/AccountPage";
 import CreateOrJoinPage from "./pages/CreateOrJoinPage";
 import HostPanelPage from "./pages/HostPanelPage";
 import PlayPage from "./pages/PlayPage";
@@ -26,6 +27,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<CreateOrJoinPage />} />
+      <Route path="/account" element={<AccountPage />} />
       <Route path="/session/:code/host" element={<HostPanelPage />} />
       <Route path="/session/:code/play" element={<PlayPage />} />
     </Routes>
