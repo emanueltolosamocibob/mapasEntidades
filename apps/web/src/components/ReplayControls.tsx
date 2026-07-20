@@ -57,9 +57,6 @@ function ReplayControls({
   onVisibilityModeChange,
   hasTeam,
   hasSelf,
-  onExport,
-  exporting,
-  exportError,
 }: {
   startTime: number;
   endTime: number;
@@ -72,9 +69,6 @@ function ReplayControls({
   onVisibilityModeChange: (mode: VisibilityMode) => void;
   hasTeam: boolean;
   hasSelf: boolean;
-  onExport: () => void;
-  exporting: boolean;
-  exportError: string | null;
 }) {
   const [speed, setSpeed] = useState(1);
   const hasData = endTime > startTime;
@@ -106,7 +100,7 @@ function ReplayControls({
             value={currentTime}
             disabled={!hasData}
             onChange={(event) => onSeek(Number(event.target.value))}
-            className="flex-1 accent-primary disabled:opacity-40"
+            className="tactical-slider flex-1"
           />
           <span className="w-24 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
             {formatDuration(elapsed)} / {formatDuration(total)}
@@ -159,13 +153,6 @@ function ReplayControls({
         >
           Solo yo
         </ModeOption>
-      </div>
-
-      <div>
-        <Button type="button" variant="outline" disabled={exporting} onClick={onExport}>
-          {exporting ? "Generando..." : "Exportar a Google Earth"}
-        </Button>
-        {exportError && <p className="mt-2 text-xs text-destructive">{exportError}</p>}
       </div>
     </div>
   );

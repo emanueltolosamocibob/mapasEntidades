@@ -116,9 +116,23 @@ function ReplayPage() {
         <h1 className="truncate text-sm font-bold tracking-wide">
           {sessionByCode.session.name} <span className="text-muted-foreground">({code})</span>
         </h1>
-        <Button variant="outline" size="sm" nativeButton={false} render={<Link to="/account" />}>
-          Volver a mis partidas
-        </Button>
+        <div className="flex items-center gap-2">
+          {exportState.status === "error" && (
+            <p className="text-xs text-destructive">{exportState.message}</p>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={exportState.status === "loading"}
+            onClick={handleExport}
+          >
+            {exportState.status === "loading" ? "Generando..." : "Exportar a Google Earth"}
+          </Button>
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link to="/account" />}>
+            Volver a mis partidas
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:p-6">
@@ -145,9 +159,6 @@ function ReplayPage() {
                   onVisibilityModeChange={setVisibilityMode}
                   hasTeam={!!myParticipant?.team_id}
                   hasSelf={!!myParticipant?.entity_id}
-                  onExport={handleExport}
-                  exporting={exportState.status === "loading"}
-                  exportError={exportState.status === "error" ? exportState.message : null}
                 />
               </TacticalPanel>
             </>
