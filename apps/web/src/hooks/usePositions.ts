@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 type PlayerPosition = {
@@ -12,9 +12,18 @@ type PlayerPosition = {
 
 export function usePositions(sessionId: string | undefined) {
   const [positions, setPositions] = useState<PlayerPosition[]>([]);
+  // El listener de INSERT en "positions" no tiene (ni puede tener,
+  // la tabla no guarda session_id) filtro por sesión -- cualquier
+  // posición nueva de cualquier partida en toda la app dispara un
+  // refresh() acá. Si dos llamadas se solapan, pueden resolver en
+  // desorden y una respuesta vieja pisar a una más nueva (se veía
+  // como el tag de "hace X" parpadeando para atrás). Este contador
+  // descarta cualquier respuesta que no sea la del último pedido.
+  const requestIdRef = useRef(0);
 
   const refresh = useCallback(async () => {
     if (!sessionId) return;
+    const requestId = ++requestIdRef.current;
 
     const { data: participants } = await supabase
       .from("airsoft_participants")
@@ -22,6 +31,8 @@ export function usePositions(sessionId: string | undefined) {
       .eq("session_id", sessionId)
       .eq("status", "accepted")
       .not("entity_id", "is", null);
+
+    if (requestId !== requestIdRef.current) return;
 
     if (!participants || participants.length === 0) {
       setPositions([]);
@@ -57,6 +68,7 @@ export function usePositions(sessionId: string | undefined) {
       ];
     });
 
+    if (requestId !== requestIdRef.current) return;
     setPositions(merged);
   }, [sessionId]);
 
