@@ -33,7 +33,7 @@ function AccountPage() {
       <div className="mx-auto max-w-3xl">
         <header className="mb-8 border-b border-border pb-6">
           <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">Mi usuario</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="mt-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">
             {session.user.email}
           </h1>
         </header>

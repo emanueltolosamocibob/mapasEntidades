@@ -120,8 +120,9 @@ function PlayPage() {
   return (
     <main className="min-h-svh bg-background">
       <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 sm:px-6">
-        <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-bold tracking-wide">
-          {sessionByCode.session.name} <span className="text-muted-foreground">({code})</span>
+        <h1 className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide">
+          <span className="min-w-0 truncate">{sessionByCode.session.name}</span>
+          <span className="shrink-0 text-muted-foreground">({code})</span>
           {sendError && (
             <span className="flex shrink-0 items-center gap-1.5 text-xs font-normal tracking-[0.2em] text-destructive">
               <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
