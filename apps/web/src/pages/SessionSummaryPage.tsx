@@ -30,6 +30,10 @@ function formatKm(m: number) {
   return (m / 1000).toFixed(1);
 }
 
+function formatDateTime(ms: number) {
+  return new Date(ms).toLocaleString("es-AR");
+}
+
 function CenteredMessage({ children }: { children: ReactNode }) {
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-4 bg-background p-8 text-center">
@@ -133,7 +137,7 @@ function SessionSummaryPage() {
             )}
             {replayData.status === "ready" && matchStats && (
               <>
-                <div className="mb-6 grid grid-cols-2 gap-3">
+                <div className="mb-3 grid grid-cols-2 gap-3">
                   <StatTile
                     label="Duración"
                     value={formatHours(replayData.tracks.endTime - replayData.tracks.startTime)}
@@ -141,9 +145,15 @@ function SessionSummaryPage() {
                   />
                   <StatTile label="Jugadores" value={String(matchStats.size)} unit="" />
                 </div>
+                <p className="mb-6 text-xs text-muted-foreground">
+                  Inicio: {formatDateTime(replayData.tracks.startTime)} — Fin:{" "}
+                  {formatDateTime(replayData.tracks.endTime)}
+                </p>
                 <TacticalPanel title="Por jugador" className="mb-6">
                   <div className="space-y-2">
-                    {[...matchStats.entries()].map(([entityId, entry]) => (
+                    {[...matchStats.entries()]
+                      .sort(([, a], [, b]) => b.distanceM - a.distanceM)
+                      .map(([entityId, entry]) => (
                       <div
                         key={entityId}
                         className="flex items-center justify-between gap-2 text-sm"
