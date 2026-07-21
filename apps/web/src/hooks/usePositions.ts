@@ -7,6 +7,7 @@ type PlayerPosition = {
   role: string;
   lat: number;
   lng: number;
+  recordedAt: string;
 };
 
 export function usePositions(sessionId: string | undefined) {
@@ -31,11 +32,14 @@ export function usePositions(sessionId: string | undefined) {
 
     const { data: latest } = await supabase
       .from("latest_positions")
-      .select("entity_id, lat, lng")
+      .select("entity_id, lat, lng, recorded_at")
       .in("entity_id", entityIds);
 
     const positionByEntity = new Map(
-      (latest ?? []).map((p) => [p.entity_id, { lat: p.lat, lng: p.lng }])
+      (latest ?? []).map((p) => [
+        p.entity_id,
+        { lat: p.lat, lng: p.lng, recordedAt: p.recorded_at as string },
+      ])
     );
 
     const merged: PlayerPosition[] = participants.flatMap((p) => {
@@ -48,6 +52,7 @@ export function usePositions(sessionId: string | undefined) {
           role: p.role,
           lat: pos.lat,
           lng: pos.lng,
+          recordedAt: pos.recordedAt,
         },
       ];
     });
