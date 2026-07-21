@@ -1,13 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useSession } from "../contexts/SessionContext";
-import { linkGoogleAccount } from "../lib/supabaseClient";
+import { consumeOAuthRedirectError, linkGoogleAccount, signInWithGoogle } from "../lib/supabaseClient";
 import { Button } from "./ui/button";
 
 function GoogleAccountPanel() {
   const session = useSession();
   const [linking, setLinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const oauthError = consumeOAuthRedirectError();
+    if (!oauthError) return;
+
+    if (oauthError.code === "identity_already_exists") {
+      setLinking(true);
+      signInWithGoogle().catch((err) => {
+        setError(err instanceof Error ? err.message : "No se pudo iniciar sesión con Google.");
+        setLinking(false);
+      });
+      return;
+    }
+
+    setError(oauthError.description || "No se pudo iniciar sesión con Google.");
+  }, []);
 
   if (session.status !== "ready") return null;
 
