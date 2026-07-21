@@ -54,18 +54,14 @@ function CreateOrJoinPage() {
           <TacticalPanel title="Cuenta de Google">
             <GoogleAccountPanel />
           </TacticalPanel>
-        </div>
 
-        <TacticalPanel
-          title="¿Problemas para verte en el mapa?"
-          accent="destructive"
-          className="mt-6"
-        >
-          <p className="text-sm text-destructive/90">
-            Activá/permití el acceso a tu ubicación en la configuración de tu navegador o
-            dispositivo.
-          </p>
-        </TacticalPanel>
+          <TacticalPanel title="¿Problemas para verte en el mapa?" accent="destructive">
+            <p className="text-sm text-destructive/90">
+              Activá/permití el acceso a tu ubicación en la configuración de tu navegador o
+              dispositivo.
+            </p>
+          </TacticalPanel>
+        </div>
       </div>
     </main>
   );
