@@ -5,6 +5,7 @@ import { useSessionByCode } from "../hooks/useSessionByCode";
 import { usePositions } from "../hooks/usePositions";
 import { useMyParticipant } from "../hooks/useMyParticipant";
 import { useSendPosition } from "../hooks/useSendPosition";
+import { useWakeLock } from "../hooks/useWakeLock";
 import { useLeaveSession } from "../hooks/useLeaveSession";
 import { useTeamRoster } from "../hooks/useTeamRoster";
 import { useAirsoftTeams } from "../hooks/useAirsoftTeams";
@@ -44,6 +45,7 @@ function PlayPage() {
     !isClosed && myParticipant?.status === "accepted" ? myParticipant.entity_id : null,
     sendIntervalMs
   );
+  useWakeLock(!isClosed && myParticipant?.status === "accepted");
 
   const { leaveSession } = useLeaveSession();
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
