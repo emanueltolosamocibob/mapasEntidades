@@ -62,6 +62,10 @@ El filtrado por equipo (un jugador solo ve a su propio equipo) se hace con RLS, 
 - `lib/sessionStatus.ts` — `isSessionClosed()`: una sesión está "cerrada" tanto si `status === 'closed'` como si ya pasó `expires_at` (cierre automático a las 5h, RF-16). Los tres puntos de acceso (`PlayPage`, `HostPanelPage`, `request_join`) tienen que tratar ambos casos igual; no hay un cron que marque `closed` activamente, la fuente de verdad es la comparación de fechas en cada punto de acceso (ver `docs/ARCHITECTURE.md` §6.3).
 - No hay gestión de estado global (Redux/Zustand/etc.) — todo vive en hooks locales + `SessionContext` (expone el usuario anónimo de Supabase).
 
+## Verificación de cambios de UI
+
+Antes de dar por hecho un cambio visual/de layout, preguntar siempre quién lo va a probar (¿el propio Claude vía el Browser pane, o el usuario a mano en su navegador/celular?) en vez de asumir que Claude debe verificarlo por su cuenta. No asumir tampoco que el Browser pane vaya a funcionar — en esta sesión el proxy de puertos aleatorios de `preview_start` falló repetidamente (páginas quedaban en blanco / "(non-http)").
+
 ## Diseño visual (tema táctico/HUD)
 
 Tailwind v4 + shadcn/ui (estilo `"base"`, componentes construidos sobre `@base-ui/react`, no Radix directo). Tema oscuro fijo (sin light mode), acento ámbar, `--radius: 0` (esquinas rectas en todos lados), fuente JetBrains Mono, **todo el texto en mayúsculas** — la regla vive en `index.css` en dos partes porque `button`/`input`/`select`/`textarea` no heredan `text-transform` del `body` por default del navegador; hay una regla explícita aparte para esos elementos.

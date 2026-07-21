@@ -38,6 +38,8 @@ const DEFAULT_CENTER: [number, number] = [-34.6037, -58.3816];
 const MAX_ZOOM = 20;
 const POSITIONS_FIT_PADDING: [number, number] = [40, 40];
 const RESTRICTION_FIT_PADDING: [number, number] = [50, 50];
+const STATUS_DISPLAY_MS = 5000;
+const STATUS_FADE_MS = 300;
 
 function boundsForPositions(positions: PlayerPosition[]) {
   if (positions.length === 1) {
@@ -296,6 +298,53 @@ function MapView({
     : DEFAULT_CENTER;
   const [showDistanceLines, setShowDistanceLines] = useState(false);
   const [showTopo, setShowTopo] = useState(false);
+  const [statusLabels, setStatusLabels] = useState<{ id: number; text: string; fading: boolean }[]>(
+    []
+  );
+  const statusTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const statusIdRef = useRef(0);
+
+  useEffect(() => {
+    const timeouts = statusTimeoutsRef.current;
+    return () => {
+      timeouts.forEach(clearTimeout);
+      timeouts.clear();
+    };
+  }, []);
+
+  function showStatus(label: string) {
+    const id = statusIdRef.current++;
+    setStatusLabels((prev) => [...prev, { id, text: label, fading: false }]);
+
+    const fadeTimeout = setTimeout(() => {
+      setStatusLabels((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, fading: true } : item))
+      );
+      const removeTimeout = setTimeout(() => {
+        setStatusLabels((prev) => prev.filter((item) => item.id !== id));
+        statusTimeoutsRef.current.delete(removeTimeout);
+      }, STATUS_FADE_MS);
+      statusTimeoutsRef.current.add(removeTimeout);
+      statusTimeoutsRef.current.delete(fadeTimeout);
+    }, STATUS_DISPLAY_MS);
+    statusTimeoutsRef.current.add(fadeTimeout);
+  }
+
+  // El efecto secundario (showStatus) va afuera del updater de setState:
+  // React StrictMode invoca dos veces las funciones updater en desarrollo
+  // para detectar justamente este tipo de impureza, lo que duplicaba el
+  // label en cada click (ver MAP-44).
+  function toggleDistanceLines() {
+    const next = !showDistanceLines;
+    setShowDistanceLines(next);
+    showStatus(`Mostrar distancias: ${next ? "ON" : "OFF"}`);
+  }
+
+  function toggleTopo() {
+    const next = !showTopo;
+    setShowTopo(next);
+    showStatus(`Vista topográfica: ${next ? "ON" : "OFF"}`);
+  }
 
   return (
     <MapContainer
@@ -349,12 +398,26 @@ function MapView({
         />
       ))}
       <TacticalZoomControl positions={positions} restriction={restriction} />
-      <DistanceLinesToggle
-        enabled={showDistanceLines}
-        onToggle={() => setShowDistanceLines((prev) => !prev)}
+      <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
+      <TopoToggle enabled={showTopo} onToggle={toggleTopo} />
+      <RecenterButton
+        className="top-3 right-14 bottom-auto left-auto"
+        onPress={() => showStatus("Centrando en mi posición...")}
       />
-      <TopoToggle enabled={showTopo} onToggle={() => setShowTopo((prev) => !prev)} />
-      <RecenterButton className="top-3 right-14 bottom-auto left-auto" />
+      {statusLabels.length > 0 && (
+        <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] flex flex-col gap-1">
+          {statusLabels.map((item) => (
+            <div
+              key={item.id}
+              className={`text-xs font-bold tracking-[0.15em] text-white transition-opacity duration-300 ${
+                item.fading ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {item.text}
+            </div>
+          ))}
+        </div>
+      )}
     </MapContainer>
   );
 }

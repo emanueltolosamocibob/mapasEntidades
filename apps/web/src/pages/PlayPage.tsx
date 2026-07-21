@@ -122,9 +122,9 @@ function PlayPage() {
       <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 sm:px-6">
         <h1 className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide">
           <span className="min-w-0 truncate">{sessionByCode.session.name}</span>
-          <span className="shrink-0 text-muted-foreground">({code})</span>
+          <span className="hidden shrink-0 text-muted-foreground sm:inline">({code})</span>
           {sendError && (
-            <span className="flex shrink-0 items-center gap-1.5 text-xs font-normal tracking-[0.2em] text-destructive">
+            <span className="hidden shrink-0 items-center gap-1.5 text-xs font-normal tracking-[0.2em] text-destructive sm:flex">
               <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
               Sin señal
             </span>
@@ -156,8 +156,19 @@ function PlayPage() {
         onCancel={() => setConfirmExitOpen(false)}
       />
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:p-6">
-        <div className="min-w-0 flex-1">
+        <div className="relative min-w-0 flex-1">
           <MapView positions={positions} restriction={restriction} />
+          <div className="absolute bottom-12 left-2 z-[1000] flex flex-col items-start gap-1 sm:hidden">
+            <span className="border border-primary bg-background/90 px-2 py-1 text-xs tracking-[0.15em] text-primary">
+              {code}
+            </span>
+            {sendError && (
+              <span className="flex items-center gap-1.5 border border-destructive bg-background/90 px-2 py-1 text-xs tracking-[0.15em] text-destructive">
+                <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                Sin señal
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex w-full flex-col gap-4 sm:w-64">
           <TacticalPanel title="Envío de posición">
