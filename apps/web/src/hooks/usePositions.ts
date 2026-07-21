@@ -67,6 +67,21 @@ export function usePositions(sessionId: string | undefined) {
         { event: "INSERT", schema: "public", table: "positions" },
         () => refresh()
       )
+      // Sin esto, aceptar/expulsar/reasignar de equipo en el panel de
+      // anfitrión no actualiza el mapa hasta que llega cualquier
+      // posición nueva de otro jugador (refresh() ya recalcula todo
+      // desde cero, pero nada disparaba ese recálculo ante un cambio en
+      // airsoft_participants) — ver MAP-49.
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "airsoft_participants",
+          filter: `session_id=eq.${sessionId}`,
+        },
+        () => refresh()
+      )
       .subscribe();
 
     return () => {
