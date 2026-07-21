@@ -3,6 +3,8 @@
 // un reloj virtual + cálculo de posición interpolada en cualquier
 // instante. La UI (MAP-29) es la que decide cómo mostrar esto.
 
+import { latLng } from "leaflet";
+
 export type PositionHistoryRow = {
   session_id: string;
   entity_id: string;
@@ -82,6 +84,44 @@ export function buildReplayTracks(rows: PositionHistoryRow[]): ReplayTracks {
   }
 
   return { tracksByEntity, metaByEntity, startTime, endTime };
+}
+
+export type EntityMatchStats = {
+  nickname: string;
+  teamName: string | null;
+  teamColor: string | null;
+  durationMs: number;
+  distanceM: number;
+};
+
+// Resumen de partida (MAP-42): duración y distancia recorrida por
+// entidad, a partir de los mismos tracks que ya arma el replay —
+// mismo cálculo de distancia (latLng().distanceTo(), gran círculo)
+// que pairwiseDistances en MapView.tsx.
+export function computeMatchStats(tracks: ReplayTracks): Map<string, EntityMatchStats> {
+  const stats = new Map<string, EntityMatchStats>();
+
+  for (const [entityId, track] of tracks.tracksByEntity) {
+    const meta = tracks.metaByEntity.get(entityId)!;
+    const durationMs = track.length > 0 ? track[track.length - 1].t - track[0].t : 0;
+
+    let distanceM = 0;
+    for (let i = 1; i < track.length; i++) {
+      distanceM += latLng(track[i - 1].lat, track[i - 1].lng).distanceTo(
+        latLng(track[i].lat, track[i].lng)
+      );
+    }
+
+    stats.set(entityId, {
+      nickname: meta.nickname,
+      teamName: meta.teamName,
+      teamColor: meta.teamColor,
+      durationMs,
+      distanceM,
+    });
+  }
+
+  return stats;
 }
 
 function interpolate(track: TrackPoint[], t: number): { lat: number; lng: number } | null {
