@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { TriangleAlert } from "lucide-react";
+import { TriangleAlert, X } from "lucide-react";
 import { useSession } from "../contexts/SessionContext";
 import { useSessionByCode } from "../hooks/useSessionByCode";
 import { usePositions } from "../hooks/usePositions";
@@ -47,12 +47,15 @@ function PlayPage() {
     sendIntervalMs
   );
   useWakeLock(!isClosed && myParticipant?.status === "accepted");
+  const [showLockWarning, setShowLockWarning] = useState(true);
 
   const { leaveSession } = useLeaveSession();
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const [exitError, setExitError] = useState<string | null>(null);
 
   async function confirmExit() {
     setConfirmExitOpen(false);
+    setExitError(null);
 
     if (myParticipant?.status === "accepted") {
       // Calculamos el resumen ANTES de salir: leaveSession marca la fila
@@ -71,7 +74,14 @@ function PlayPage() {
         }
       }
 
-      await leaveSession(myParticipant.id);
+      const left = await leaveSession(myParticipant.id);
+      if (!left) {
+        // No navegamos como si hubiera salido bien -- si esto fallara en
+        // silencio (MAP-52), la fila queda 'accepted' y bloquea para
+        // siempre un reingreso.
+        setExitError("No se pudo salir de la partida. Probá de nuevo.");
+        return;
+      }
       navigate(`/session/${code}/summary`, { state: { personalSummary } });
       return;
     }
@@ -180,10 +190,27 @@ function PlayPage() {
         onConfirm={confirmExit}
         onCancel={() => setConfirmExitOpen(false)}
       />
-      <div className="mx-4 mt-4 flex items-center gap-2 border border-destructive bg-destructive/10 px-3 py-2 text-xs font-bold tracking-[0.1em] text-destructive uppercase sm:mx-6 sm:mt-6">
-        <TriangleAlert className="h-4 w-4 shrink-0" />
-        NO BLOQUEES la pantalla del celular — si lo hacés, tu equipo deja de verte en el mapa.
-      </div>
+      {exitError && (
+        <p className="border-b border-border bg-destructive/10 px-4 py-2 text-xs text-destructive sm:px-6">
+          {exitError}
+        </p>
+      )}
+      {showLockWarning && (
+        <div className="mx-4 mt-4 flex items-center gap-2 border border-destructive bg-destructive/10 px-3 py-2 text-xs font-bold tracking-[0.1em] text-destructive uppercase sm:mx-6 sm:mt-6">
+          <TriangleAlert className="h-4 w-4 shrink-0" />
+          <span className="flex-1">
+            NO BLOQUEES la pantalla del celular — si lo hacés, tu equipo deja de verte en el mapa.
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowLockWarning(false)}
+            aria-label="Cerrar aviso"
+            className="shrink-0 text-destructive hover:opacity-70"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:p-6">
         <div className="relative min-w-0 flex-1">
           <MapView positions={positions} restriction={restriction} />
