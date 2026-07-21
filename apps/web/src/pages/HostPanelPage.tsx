@@ -90,7 +90,7 @@ function HostPanelPage() {
   async function confirmCloseSession() {
     setConfirmCloseOpen(false);
     const success = await closeSession(currentSessionId);
-    if (success) navigate("/");
+    if (success) navigate(`/session/${code}/summary`);
   }
 
   return (

@@ -7,6 +7,7 @@ import CreateOrJoinPage from "./pages/CreateOrJoinPage";
 import HostPanelPage from "./pages/HostPanelPage";
 import PlayPage from "./pages/PlayPage";
 import ReplayPage from "./pages/ReplayPage";
+import SessionSummaryPage from "./pages/SessionSummaryPage";
 
 function App() {
   const session = useSession();
@@ -35,6 +36,7 @@ function App() {
         <Route path="/session/:code/host" element={<HostPanelPage />} />
         <Route path="/session/:code/play" element={<PlayPage />} />
         <Route path="/session/:code/replay" element={<ReplayPage />} />
+        <Route path="/session/:code/summary" element={<SessionSummaryPage />} />
       </Routes>
       <SpeedInsights />
       <Analytics />

@@ -9,6 +9,8 @@ import { useLeaveSession } from "../hooks/useLeaveSession";
 import { useTeamRoster } from "../hooks/useTeamRoster";
 import { useAirsoftTeams } from "../hooks/useAirsoftTeams";
 import { isSessionClosed } from "../lib/sessionStatus";
+import { supabase } from "../lib/supabaseClient";
+import { buildReplayTracks, computeMatchStats, type PositionHistoryRow } from "../lib/replayEngine";
 import { cn } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import MapView from "../components/MapView";
@@ -48,9 +50,29 @@ function PlayPage() {
 
   async function confirmExit() {
     setConfirmExitOpen(false);
+
     if (myParticipant?.status === "accepted") {
+      // Calculamos el resumen ANTES de salir: leaveSession marca la fila
+      // como 'kicked', y export_session_positions ya no autoriza a un
+      // participante no-aceptado (ver MAP-42) — si lo pidiéramos después
+      // de salir, esto fallaría.
+      let personalSummary: { durationMs: number; distanceM: number } | null = null;
+      if (sessionId && myParticipant.entity_id) {
+        const { data } = await supabase.rpc("export_session_positions", {
+          p_session_id: sessionId,
+        });
+        const tracks = buildReplayTracks((data ?? []) as PositionHistoryRow[]);
+        const stats = computeMatchStats(tracks).get(myParticipant.entity_id);
+        if (stats) {
+          personalSummary = { durationMs: stats.durationMs, distanceM: stats.distanceM };
+        }
+      }
+
       await leaveSession(myParticipant.id);
+      navigate(`/session/${code}/summary`, { state: { personalSummary } });
+      return;
     }
+
     navigate("/");
   }
 
