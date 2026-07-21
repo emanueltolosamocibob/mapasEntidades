@@ -145,10 +145,10 @@ function SessionSummaryPage() {
                   />
                   <StatTile label="Jugadores" value={String(matchStats.size)} unit="" />
                 </div>
-                <p className="mb-6 text-xs text-muted-foreground">
-                  Inicio: {formatDateTime(replayData.tracks.startTime)} — Fin:{" "}
-                  {formatDateTime(replayData.tracks.endTime)}
-                </p>
+                <div className="mb-6 space-y-1 text-xs text-muted-foreground">
+                  <p>Inicio: {formatDateTime(replayData.tracks.startTime)}</p>
+                  <p>Fin: {formatDateTime(replayData.tracks.endTime)}</p>
+                </div>
                 <TacticalPanel title="Por jugador" className="mb-6">
                   <div className="space-y-2">
                     {[...matchStats.entries()]
