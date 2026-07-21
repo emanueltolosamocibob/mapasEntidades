@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import CreateSessionForm from "../components/CreateSessionForm";
 import GoogleAccountPanel from "../components/GoogleAccountPanel";
@@ -11,6 +12,11 @@ function CreateOrJoinPage() {
   const session = useSession();
   const userId = session.status === "ready" ? session.user.id : undefined;
   const hostedSession = useMyHostedSession(userId);
+  // El overlay es para cuando se vuelve a la home después de haber
+  // salido del panel de anfitrión — no para tapar la vista de éxito
+  // (código/QR) de la propia creación. Se resetea solo al volver a
+  // montar esta página (ej. después de navegar al panel y volver).
+  const [justCreated, setJustCreated] = useState(false);
 
   return (
     <main className="tactical-grid min-h-svh bg-background px-4 py-10 text-foreground sm:px-8">
@@ -30,9 +36,9 @@ function CreateOrJoinPage() {
           </TacticalPanel>
 
           <TacticalPanel title="Crear partida" className="relative">
-            <CreateSessionForm />
-            {hostedSession && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/60 p-4 text-center">
+            <CreateSessionForm onCreated={() => setJustCreated(true)} />
+            {hostedSession && !justCreated && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/90 p-4 text-center">
                 <p className="text-xs tracking-[0.2em] text-primary uppercase">
                   Partida en curso: {hostedSession.name} ({hostedSession.code})
                 </p>

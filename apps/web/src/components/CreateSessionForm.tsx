@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { useCreateSession } from "../hooks/useCreateSession";
 import { usePresetFields } from "../hooks/usePresetFields";
@@ -57,7 +57,7 @@ function ModeOption({
   );
 }
 
-function CreateSessionForm() {
+function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
   const [name, setName] = useState("");
   const [teams, setTeams] = useState(["Rojo", "Azul"]);
   const [origin, setOrigin] = useState<Point | null>(null);
@@ -70,6 +70,16 @@ function CreateSessionForm() {
   const presetFields = usePresetFields();
   const [selectedFieldId, setSelectedFieldId] = useState("");
   const [focusSignal, setFocusSignal] = useState(0);
+
+  // Avisa al padre para que no tape esta misma vista de éxito con el
+  // overlay de "partida en curso" (MAP-46) — ese overlay es para cuando
+  // se vuelve a la home después, no para el momento en que se acaba de
+  // crear (acá es donde el host todavía tiene que ver el código/QR).
+  useEffect(() => {
+    if (state.status === "success") {
+      onCreated?.();
+    }
+  }, [state.status, onCreated]);
 
   function updateTeam(index: number, value: string) {
     setTeams((prev) => prev.map((team, i) => (i === index ? value : team)));

@@ -162,6 +162,11 @@ body {
   color: var(--muted-foreground) !important;
   border: 1px solid var(--border) !important;
   border-radius: 0 !important;
+  /* Más chica para que no se pise con el código de sesión / labels de
+     estado que viven en la esquina inferior del mapa en mobile. */
+  font-size: 9px !important;
+  padding: 0 4px !important;
+  line-height: 1.4 !important;
 }
 .leaflet-control-attribution a {
   color: var(--primary) !important;
