@@ -29,11 +29,11 @@ function PendingRequestsList({
   return (
     <div className="space-y-3">
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <ul className="space-y-3">
+      <ul className="space-y-3 overflow-x-auto">
         {participants.map((participant) => (
           <li
             key={participant.id}
-            className="flex flex-wrap items-center gap-2 border border-border p-3"
+            className="flex w-max min-w-full flex-nowrap items-center gap-2 border border-border p-3"
           >
             <strong className="mr-auto">{participant.nickname}</strong>
             <select
