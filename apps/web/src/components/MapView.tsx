@@ -21,6 +21,8 @@ type PlayerPosition = {
   lat: number;
   lng: number;
   teamId?: string | null;
+  // Opcional: en replay no aplica el tag de "hace X" (MAP-51), solo en vivo.
+  recordedAt?: string;
 };
 
 type Restriction = { lat: number; lng: number; radiusM: number };
@@ -304,6 +306,15 @@ function MapView({
   const statusTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const statusIdRef = useRef(0);
 
+  // Fuerza un re-render cada 5s para que el tag de "hace X" (MAP-51) se
+  // actualice con el correr del tiempo, aunque no llegue ninguna
+  // posición nueva -- es justo el caso que tiene que detectar.
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => forceTick((t) => t + 1), 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const timeouts = statusTimeoutsRef.current;
     return () => {
@@ -393,7 +404,8 @@ function MapView({
             position.nickname,
             position.role,
             isOutOfBounds(position, restriction),
-            markerColorFor(position, myTeamId, teamColors)
+            markerColorFor(position, myTeamId, teamColors),
+            position.recordedAt
           )}
         />
       ))}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { TriangleAlert } from "lucide-react";
 import { useSession } from "../contexts/SessionContext";
 import { useSessionByCode } from "../hooks/useSessionByCode";
 import { usePositions } from "../hooks/usePositions";
@@ -179,6 +180,10 @@ function PlayPage() {
         onConfirm={confirmExit}
         onCancel={() => setConfirmExitOpen(false)}
       />
+      <div className="mx-4 mt-4 flex items-center gap-2 border border-destructive bg-destructive/10 px-3 py-2 text-xs font-bold tracking-[0.1em] text-destructive uppercase sm:mx-6 sm:mt-6">
+        <TriangleAlert className="h-4 w-4 shrink-0" />
+        NO BLOQUEES la pantalla del celular — si lo hacés, tu equipo deja de verte en el mapa.
+      </div>
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:p-6">
         <div className="relative min-w-0 flex-1">
           <MapView positions={positions} restriction={restriction} />
