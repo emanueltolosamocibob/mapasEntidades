@@ -81,6 +81,10 @@ body {
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    /* Sin esto, tocar un <button> en mobile (ej. los controles flotantes
+       del mapa) muestra el highlight táctil gris/blanco default del
+       navegador sobre el tema oscuro — se ve como un destello blanco. */
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-background text-foreground uppercase;
@@ -119,6 +123,14 @@ body {
 .tactical-marker-icon {
   background: transparent !important;
   border: none !important;
+}
+
+/* Leaflet le fuerza Helvetica Neue a todo lo que vive dentro de
+   .leaflet-container (controles propios y nuestros overlays custom
+   montados como children del MapContainer) — la pisamos para que
+   hereden la tipografía del resto del proyecto. */
+.leaflet-container {
+  font-family: inherit !important;
 }
 
 /* Reskin de los controles +/- de Leaflet para que combinen con el tema */

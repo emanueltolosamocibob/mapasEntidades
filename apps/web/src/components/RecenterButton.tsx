@@ -9,9 +9,11 @@ type Point = { lat: number; lng: number };
 function RecenterButton({
   className,
   onLocate,
+  onPress,
 }: {
   className?: string;
   onLocate?: (point: Point) => void;
+  onPress?: () => void;
 }) {
   const map = useMap();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -24,6 +26,7 @@ function RecenterButton({
   }, []);
 
   function handleClick() {
+    onPress?.();
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition((position) => {
       const point = { lat: position.coords.latitude, lng: position.coords.longitude };
