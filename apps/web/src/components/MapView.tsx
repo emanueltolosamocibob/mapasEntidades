@@ -405,7 +405,7 @@ function MapView({
         onPress={() => showStatus("Centrando en mi posición...")}
       />
       {statusLabels.length > 0 && (
-        <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] flex flex-col gap-1">
+        <div className="pointer-events-none absolute bottom-16 left-3 z-[1000] flex flex-col gap-1">
           {statusLabels.map((item) => (
             <div
               key={item.id}

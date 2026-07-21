@@ -180,7 +180,7 @@ function PlayPage() {
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:p-6">
         <div className="relative min-w-0 flex-1">
           <MapView positions={positions} restriction={restriction} />
-          <div className="absolute bottom-12 left-2 z-[1000] flex flex-col items-start gap-1 sm:hidden">
+          <div className="absolute top-16 left-3 z-[1000] flex flex-col items-start gap-1 sm:hidden">
             <span className="border border-primary bg-background/90 px-2 py-1 text-xs tracking-[0.15em] text-primary">
               {code}
             </span>
