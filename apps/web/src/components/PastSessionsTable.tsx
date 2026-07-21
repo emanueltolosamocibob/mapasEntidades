@@ -34,7 +34,7 @@ function PastSessionsTable({
                 {session.host_id === currentUserId ? "Anfitrión" : "Jugador"}
               </td>
               <td className="py-2 pr-2 text-muted-foreground">
-                {new Date(session.created_at).toLocaleDateString()}
+                {new Date(session.created_at).toLocaleDateString("es-AR")}
               </td>
               <td className="py-2 text-right">
                 <Button size="sm" nativeButton={false} render={<Link to={`/session/${session.code}/replay`} />}>
