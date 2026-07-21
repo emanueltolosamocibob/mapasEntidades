@@ -3,9 +3,21 @@ import PastSessionsTable from "../components/PastSessionsTable";
 import StatsPanel from "../components/StatsPanel";
 import TacticalPanel from "../components/TacticalPanel";
 import UserInfoPanel from "../components/UserInfoPanel";
+import { Button } from "../components/ui/button";
 import { useSession } from "../contexts/SessionContext";
 import { usePastSessions } from "../hooks/usePastSessions";
 import { usePlayStats } from "../hooks/usePlayStats";
+import { supabase } from "../lib/supabaseClient";
+
+// Reload completo a propósito: SessionContext solo reacciona a
+// onAuthStateChange cuando hay un session.user (ver su useEffect), así
+// que un sign-out no lo actualiza solo. El reload fuerza a
+// ensureAnonymousSession() a arrancar de cero y crear una sesión
+// anónima nueva y limpia.
+async function handleSignOut() {
+  await supabase.auth.signOut();
+  window.location.href = "/";
+}
 
 function AccountPage() {
   const session = useSession();
@@ -71,12 +83,17 @@ function AccountPage() {
           )}
         </TacticalPanel>
 
-        <Link
-          to="/"
-          className="mt-6 inline-block text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
-        >
-          Volver al inicio
-        </Link>
+        <div className="mt-6 flex items-center justify-between gap-4">
+          <Link
+            to="/"
+            className="text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
+          >
+            Volver al inicio
+          </Link>
+          <Button variant="outline" size="sm" onClick={handleSignOut}>
+            Cerrar sesión
+          </Button>
+        </div>
       </div>
     </main>
   );
