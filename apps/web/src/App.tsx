@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 import { useSession } from "./contexts/SessionContext";
 import AccountPage from "./pages/AccountPage";
 import CreateOrJoinPage from "./pages/CreateOrJoinPage";
@@ -36,6 +37,7 @@ function App() {
         <Route path="/session/:code/replay" element={<ReplayPage />} />
       </Routes>
       <SpeedInsights />
+      <Analytics />
     </>
   );
 }
