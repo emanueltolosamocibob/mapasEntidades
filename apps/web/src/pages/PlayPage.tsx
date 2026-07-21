@@ -118,7 +118,7 @@ function PlayPage() {
   }
 
   return (
-    <main className="min-h-svh bg-background">
+    <main className="tactical-grid min-h-svh bg-background">
       <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 sm:px-6">
         <h1 className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide">
           <span className="min-w-0 truncate">{sessionByCode.session.name}</span>
