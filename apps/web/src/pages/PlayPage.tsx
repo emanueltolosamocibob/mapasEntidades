@@ -130,7 +130,7 @@ function PlayPage() {
           )}
         </h1>
         <div className="flex items-center gap-2">
-          {isHost && (
+          {isHost ? (
             <Button
               variant="outline"
               size="sm"
@@ -139,10 +139,11 @@ function PlayPage() {
             >
               Volver al panel de anfitrión
             </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setConfirmExitOpen(true)}>
+              Salir
+            </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => setConfirmExitOpen(true)}>
-            Salir
-          </Button>
         </div>
       </div>
       <ConfirmDialog
