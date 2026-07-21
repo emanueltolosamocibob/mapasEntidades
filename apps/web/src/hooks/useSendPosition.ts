@@ -1,11 +1,30 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-const SEND_INTERVAL_MS = 5000;
+const FAILURE_THRESHOLD = 3;
 
-export function useSendPosition(entityId: string | null | undefined) {
+export function useSendPosition(entityId: string | null | undefined, intervalMs: number) {
+  const [hasError, setHasError] = useState(false);
+  const failureCountRef = useRef(0);
+
   useEffect(() => {
     if (!entityId || !navigator.geolocation) return;
+
+    failureCountRef.current = 0;
+    setHasError(false);
+
+    function onSuccess() {
+      failureCountRef.current = 0;
+      setHasError(false);
+    }
+
+    function onFailure(message: string, err: unknown) {
+      console.error(message, err);
+      failureCountRef.current += 1;
+      if (failureCountRef.current >= FAILURE_THRESHOLD) {
+        setHasError(true);
+      }
+    }
 
     function sendPosition() {
       navigator.geolocation.getCurrentPosition(
@@ -17,19 +36,23 @@ export function useSendPosition(entityId: string | null | undefined) {
             accuracy_m: accuracy,
           });
           if (error) {
-            console.error("No se pudo enviar la posición:", error.message);
+            onFailure("No se pudo enviar la posición:", error.message);
+          } else {
+            onSuccess();
           }
         },
         (error) => {
-          console.error("No se pudo obtener la ubicación:", error.message);
+          onFailure("No se pudo obtener la ubicación:", error.message);
         },
         { enableHighAccuracy: true }
       );
     }
 
     sendPosition();
-    const interval = setInterval(sendPosition, SEND_INTERVAL_MS);
+    const interval = setInterval(sendPosition, intervalMs);
 
     return () => clearInterval(interval);
-  }, [entityId]);
+  }, [entityId, intervalMs]);
+
+  return { hasError };
 }

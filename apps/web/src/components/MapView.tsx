@@ -9,7 +9,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import { latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
-import { Minus, Plus, Waypoints } from "lucide-react";
+import { Minus, Mountain, Plus, Waypoints } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
 import { playerMarkerIcon, distanceLabelIcon, ENEMY_COLOR } from "../lib/tacticalIcon";
@@ -27,6 +27,12 @@ type Restriction = { lat: number; lng: number; radiusM: number };
 
 const CARTO_DARK_URL =
   "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
+const TOPO_URL = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
+const TOPO_ATTRIBUTION =
+  'map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
+// OpenTopoMap no tiene tiles nativos más allá de este zoom — Leaflet
+// sobre-escala los últimos automáticamente, se ve borroso pero funciona.
+const TOPO_MAX_NATIVE_ZOOM = 17;
 
 const DEFAULT_CENTER: [number, number] = [-34.6037, -58.3816];
 const MAX_ZOOM = 20;
@@ -126,6 +132,23 @@ function DistanceLinesToggle({
       }`}
     >
       <Waypoints className="h-4 w-4" />
+    </button>
+  );
+}
+
+function TopoToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={enabled}
+      aria-label="Mapa topográfico"
+      title="Mapa topográfico"
+      className={`absolute top-3 right-[100px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+        enabled ? "bg-primary/20" : ""
+      }`}
+    >
+      <Mountain className="h-4 w-4" />
     </button>
   );
 }
@@ -272,6 +295,7 @@ function MapView({
     ? [restriction.lat, restriction.lng]
     : DEFAULT_CENTER;
   const [showDistanceLines, setShowDistanceLines] = useState(false);
+  const [showTopo, setShowTopo] = useState(false);
 
   return (
     <MapContainer
@@ -282,12 +306,23 @@ function MapView({
       zoomControl={false}
       style={{ height: "70vh", width: "100%" }}
     >
-      <TileLayer
-        className="map-tiles-hc"
-        url={CARTO_DARK_URL}
-        maxZoom={MAX_ZOOM}
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-      />
+      {showTopo ? (
+        <TileLayer
+          key="topo"
+          url={TOPO_URL}
+          maxZoom={MAX_ZOOM}
+          maxNativeZoom={TOPO_MAX_NATIVE_ZOOM}
+          attribution={TOPO_ATTRIBUTION}
+        />
+      ) : (
+        <TileLayer
+          key="dark"
+          className="map-tiles-hc"
+          url={CARTO_DARK_URL}
+          maxZoom={MAX_ZOOM}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        />
+      )}
       {restriction ? (
         <>
           <FitToRestriction restriction={restriction} />
@@ -318,6 +353,7 @@ function MapView({
         enabled={showDistanceLines}
         onToggle={() => setShowDistanceLines((prev) => !prev)}
       />
+      <TopoToggle enabled={showTopo} onToggle={() => setShowTopo((prev) => !prev)} />
       <RecenterButton className="top-3 right-14 bottom-auto left-auto" />
     </MapContainer>
   );

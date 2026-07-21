@@ -15,6 +15,8 @@ import MapView from "../components/MapView";
 import TacticalPanel from "../components/TacticalPanel";
 import ConfirmDialog from "../components/ConfirmDialog";
 
+const SEND_INTERVAL_OPTIONS = [3000, 5000, 10000, 30000];
+
 function PlayPage() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
@@ -35,8 +37,10 @@ function PlayPage() {
   const isHost =
     sessionByCode.status === "found" && userId === sessionByCode.session.host_id;
   const myTeam = teams.find((team) => team.id === myParticipant?.team_id);
-  useSendPosition(
-    !isClosed && myParticipant?.status === "accepted" ? myParticipant.entity_id : null
+  const [sendIntervalMs, setSendIntervalMs] = useState(5000);
+  const { hasError: sendError } = useSendPosition(
+    !isClosed && myParticipant?.status === "accepted" ? myParticipant.entity_id : null,
+    sendIntervalMs
   );
 
   const { leaveSession } = useLeaveSession();
@@ -116,8 +120,14 @@ function PlayPage() {
   return (
     <main className="min-h-svh bg-background">
       <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 sm:px-6">
-        <h1 className="truncate text-sm font-bold tracking-wide">
+        <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-bold tracking-wide">
           {sessionByCode.session.name} <span className="text-muted-foreground">({code})</span>
+          {sendError && (
+            <span className="flex shrink-0 items-center gap-1.5 text-xs font-normal tracking-[0.2em] text-destructive">
+              <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+              Sin señal
+            </span>
+          )}
         </h1>
         <div className="flex items-center gap-2">
           {isHost && (
@@ -147,7 +157,21 @@ function PlayPage() {
         <div className="min-w-0 flex-1">
           <MapView positions={positions} restriction={restriction} />
         </div>
-        <div className="w-full sm:w-64">
+        <div className="flex w-full flex-col gap-4 sm:w-64">
+          <TacticalPanel title="Envío de posición">
+            <div className="flex gap-1.5">
+              {SEND_INTERVAL_OPTIONS.map((option) => (
+                <Button
+                  key={option}
+                  size="sm"
+                  variant={sendIntervalMs === option ? "default" : "outline"}
+                  onClick={() => setSendIntervalMs(option)}
+                >
+                  {option / 1000}s
+                </Button>
+              ))}
+            </div>
+          </TacticalPanel>
           <TacticalPanel title={myTeam?.name ?? "Mi equipo"}>
             <ul className="space-y-2 text-sm">
               {roster.map((member) => {
