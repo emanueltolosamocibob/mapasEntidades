@@ -115,7 +115,15 @@ body {
      Se aplica vía className="map-tiles-hc" en el <TileLayer> de
      MapView.tsx y OriginPicker.tsx. */
   .map-tiles-hc {
-    filter: none;
+    filter: contrast(1) brightness(1.5);
+  }
+
+  /* OpenTopoMap es un estilo claro (fondo blanco/verde pastel) — sin este
+     filtro, el modo topográfico rompe el contraste contra el tema táctico
+     oscuro (MAP-53). Invertir + rotar el hue 180° devuelve los verdes/marrones
+     a tonos naturales pero sobre fondo oscuro, en vez de colores invertidos. */
+  .map-tiles-topo-dark {
+    filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
   }
 }
 
