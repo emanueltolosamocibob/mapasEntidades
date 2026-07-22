@@ -82,6 +82,89 @@ export function distanceLabelIcon(distanceM: number) {
   });
 }
 
+export type MapMarkerIconType =
+  | "friendly_base"
+  | "enemy_base"
+  | "objective"
+  | "flag"
+  | "arrow_up"
+  | "arrow_down"
+  | "arrow_left"
+  | "arrow_right"
+  | "danger"
+  | "rally_point"
+  | "help";
+
+export const MAP_MARKER_LABELS: Record<MapMarkerIconType, string> = {
+  friendly_base: "BASE AMIGA",
+  enemy_base: "BASE ENEMIGA",
+  objective: "OBJETIVO",
+  flag: "BANDERA",
+  arrow_up: "AVANZAR",
+  arrow_down: "RETROCEDER",
+  arrow_left: "IZQUIERDA",
+  arrow_right: "DERECHA",
+  danger: "PELIGRO",
+  rally_point: "PUNTO DE ENCUENTRO",
+  help: "AYUDA",
+};
+
+const MAP_MARKER_COLORS: Record<MapMarkerIconType, string> = {
+  friendly_base: AMBER,
+  enemy_base: ENEMY_COLOR,
+  objective: AMBER,
+  flag: AMBER,
+  arrow_up: AMBER,
+  arrow_down: AMBER,
+  arrow_left: AMBER,
+  arrow_right: AMBER,
+  danger: STALE_COLOR,
+  rally_point: AMBER,
+  help: STALE_COLOR,
+};
+
+const HOUSE_SHAPE =
+  '<path d="M2 9 L9 2 L16 9 M4 8 V16 H14 V8" fill="none" stroke="COLOR" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />';
+
+const MAP_MARKER_SHAPE_SVG: Record<MapMarkerIconType, (color: string) => string> = {
+  friendly_base: (color) => HOUSE_SHAPE.replace(/COLOR/g, color),
+  enemy_base: (color) => HOUSE_SHAPE.replace(/COLOR/g, color),
+  objective: (color) =>
+    `<circle cx="9" cy="9" r="7" fill="none" stroke="${color}" stroke-width="2" /><line x1="9" y1="1" x2="9" y2="4" stroke="${color}" stroke-width="2" /><line x1="9" y1="14" x2="9" y2="17" stroke="${color}" stroke-width="2" /><line x1="1" y1="9" x2="4" y2="9" stroke="${color}" stroke-width="2" /><line x1="14" y1="9" x2="17" y2="9" stroke="${color}" stroke-width="2" />`,
+  flag: (color) =>
+    `<line x1="3" y1="2" x2="3" y2="17" stroke="${color}" stroke-width="2" /><path d="M3 3 L16 6 L3 9 Z" fill="${color}" />`,
+  arrow_up: (color) => `<polygon points="9,2 16,16 2,16" fill="${color}" />`,
+  arrow_down: (color) => `<polygon points="9,16 16,2 2,2" fill="${color}" />`,
+  arrow_left: (color) => `<polygon points="2,9 16,2 16,16" fill="${color}" />`,
+  arrow_right: (color) => `<polygon points="16,9 2,2 2,16" fill="${color}" />`,
+  danger: (color) =>
+    `<polygon points="9,2 17,16 1,16" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" /><line x1="9" y1="7" x2="9" y2="11" stroke="${color}" stroke-width="2" stroke-linecap="round" /><circle cx="9" cy="13.5" r="1" fill="${color}" />`,
+  rally_point: (color) =>
+    `<circle cx="9" cy="9" r="7" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="3 2" /><circle cx="9" cy="9" r="2" fill="${color}" />`,
+  help: (color) =>
+    `<rect x="7" y="2" width="4" height="14" fill="${color}" /><rect x="2" y="7" width="14" height="4" fill="${color}" />`,
+};
+
+// Marcadores tácticos agregados por jugadores (MAP-57) -- label custom si lo
+// puso el usuario, o el nombre del tipo por default (ej. "BASE ENEMIGA").
+export function mapMarkerIcon(iconType: MapMarkerIconType, label: string | null) {
+  const color = MAP_MARKER_COLORS[iconType];
+  const shape = MAP_MARKER_SHAPE_SVG[iconType](color);
+  const text = escapeHtml(label && label.trim() ? label.trim() : MAP_MARKER_LABELS[iconType]);
+
+  return divIcon({
+    html: `
+      <div style="display:flex;flex-direction:column;align-items:center;width:120px;">
+        <span style="font-family:'JetBrains Mono Variable',ui-monospace,monospace;font-size:10px;letter-spacing:0.05em;color:${color};text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,0.85);margin-bottom:2px;">${text}</span>
+        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">${shape}</svg>
+      </div>
+    `,
+    className: "tactical-marker-icon",
+    iconSize: [120, 32],
+    iconAnchor: [60, 23],
+  });
+}
+
 export function playerMarkerIcon(
   nickname: string,
   role: string,

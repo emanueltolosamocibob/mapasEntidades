@@ -181,6 +181,7 @@ function HostPanelPage() {
                     positions={positionsWithTeam}
                     restriction={restriction}
                     teamColors={teamColors}
+                    sessionId={sessionId}
                   />
                 </div>
               )}
