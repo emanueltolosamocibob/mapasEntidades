@@ -127,6 +127,13 @@ body {
   }
 }
 
+/* MapContainer tiene height: 70vh inline (MAP-55) — sin esto, al pedir
+   fullscreen el div crece pero el mapa queda con esa altura fija. */
+.leaflet-container:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
 /* Leaflet le pone fondo/borde blanco a los divIcon por defecto */
 .tactical-marker-icon {
   background: transparent !important;
