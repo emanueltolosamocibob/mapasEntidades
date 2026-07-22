@@ -138,12 +138,19 @@ body {
    MapContainer): fondos "ruidosos" con muchos colores propios, a
    diferencia del dark liso de CARTO -- jugadores, marcadores y líneas de
    distancia se pierden sin un contorno oscuro marcado. drop-shadow (no
-   box-shadow) porque son íconos/paths, no cajas rectangulares. */
+   box-shadow) porque son íconos/svg, no cajas rectangulares. */
 .map-mode-bright .tactical-marker-icon {
   filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000);
 }
 .map-mode-bright .leaflet-interactive {
   filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000);
+}
+/* El drop-shadow del ícono no alcanza para el texto del tag (nickname,
+   tag de marcador, "hace X") -- se le suma un fondo sólido directo,
+   igual que hace un HUD real, no solo contorno. */
+.map-mode-bright .tactical-marker-label {
+  background: rgba(0, 0, 0, 0.75);
+  padding: 1px 4px;
 }
 
 /* Leaflet le pone fondo/borde blanco a los divIcon por defecto */
