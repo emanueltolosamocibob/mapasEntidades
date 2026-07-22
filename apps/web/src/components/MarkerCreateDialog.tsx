@@ -1,33 +1,46 @@
 import { useState } from "react";
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  Flag,
-  HeartPulse,
-  Home,
-  ShieldAlert,
-  Target,
-  TriangleAlert,
-  Users,
-} from "lucide-react";
 import { Button } from "./ui/button";
-import { MAP_MARKER_LABELS, type MapMarkerIconType } from "../lib/tacticalIcon";
+import {
+  MAP_MARKER_LABELS,
+  MAP_MARKER_SHAPE_SVG,
+  isMovementMarker,
+  type MapMarkerIconType,
+} from "../lib/tacticalIcon";
 
-const ICON_TYPE_OPTIONS: { type: MapMarkerIconType; Icon: typeof Home }[] = [
-  { type: "friendly_base", Icon: Home },
-  { type: "enemy_base", Icon: ShieldAlert },
-  { type: "objective", Icon: Target },
-  { type: "flag", Icon: Flag },
-  { type: "arrow_up", Icon: ArrowUp },
-  { type: "arrow_down", Icon: ArrowDown },
-  { type: "arrow_left", Icon: ArrowLeft },
-  { type: "arrow_right", Icon: ArrowRight },
-  { type: "danger", Icon: TriangleAlert },
-  { type: "rally_point", Icon: Users },
-  { type: "help", Icon: HeartPulse },
+const REFERENCE_TYPES: MapMarkerIconType[] = [
+  "friendly_base",
+  "enemy_base",
+  "objective",
+  "flag",
+  "danger",
+  "rally_point",
+  "help",
 ];
+
+// En orden horario arrancando en N, una al lado de la otra.
+const MOVEMENT_TYPES: MapMarkerIconType[] = [
+  "arrow_up",
+  "arrow_up_right",
+  "arrow_right",
+  "arrow_down_right",
+  "arrow_down",
+  "arrow_down_left",
+  "arrow_left",
+  "arrow_up_left",
+];
+
+// Misma forma (MAP_MARKER_SHAPE_SVG) que dibuja mapMarkerIcon() para
+// Leaflet -- una sola fuente de verdad, el botón se ve idéntico al
+// marcador que termina puesto en el mapa.
+function MarkerGlyph({ iconType }: { iconType: MapMarkerIconType }) {
+  return (
+    <svg
+      viewBox="0 0 18 18"
+      className="h-5 w-5"
+      dangerouslySetInnerHTML={{ __html: MAP_MARKER_SHAPE_SVG[iconType] }}
+    />
+  );
+}
 
 function MarkerCreateDialog({
   open,
@@ -51,9 +64,20 @@ function MarkerCreateDialog({
 
   function handleConfirm() {
     if (!selectedType) return;
-    onConfirm(selectedType, label);
+    // Los marcadores de movimiento (flechas) son puramente direccionales,
+    // nunca llevan tag sobre el mapa -- se ignora lo que haya en el input
+    // aunque haya quedado cargado de una selección anterior.
+    onConfirm(selectedType, isMovementMarker(selectedType) ? "" : label);
     setSelectedType(null);
     setLabel("");
+  }
+
+  function iconButtonClass(type: MapMarkerIconType) {
+    return `flex h-12 w-full items-center justify-center border ${
+      selectedType === type
+        ? "border-primary bg-primary/20 text-primary"
+        : "border-border text-muted-foreground hover:bg-primary/10"
+    }`;
   }
 
   return (
@@ -66,33 +90,52 @@ function MarkerCreateDialog({
 
         <p className="mb-4 text-xs tracking-[0.2em] text-primary uppercase">Agregar marcador</p>
 
+        <p className="mb-1.5 text-[10px] tracking-[0.15em] text-muted-foreground uppercase">
+          Referencias
+        </p>
         <div className="mb-4 grid grid-cols-4 gap-2">
-          {ICON_TYPE_OPTIONS.map(({ type, Icon }) => (
+          {REFERENCE_TYPES.map((type) => (
             <button
               key={type}
               type="button"
               onClick={() => setSelectedType(type)}
               aria-pressed={selectedType === type}
               title={MAP_MARKER_LABELS[type]}
-              className={`flex h-12 w-full items-center justify-center border ${
-                selectedType === type
-                  ? "border-primary bg-primary/20 text-primary"
-                  : "border-border text-muted-foreground hover:bg-primary/10"
-              }`}
+              className={iconButtonClass(type)}
             >
-              <Icon className="h-5 w-5" />
+              <MarkerGlyph iconType={type} />
             </button>
           ))}
         </div>
 
-        <input
-          type="text"
-          value={label}
-          onChange={(event) => setLabel(event.target.value)}
-          placeholder={selectedType ? MAP_MARKER_LABELS[selectedType] : "Etiqueta (opcional)"}
-          maxLength={40}
-          className="mb-6 w-full border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-primary"
-        />
+        <p className="mb-1.5 text-[10px] tracking-[0.15em] text-muted-foreground uppercase">
+          Movimiento
+        </p>
+        <div className="mb-4 grid grid-cols-4 gap-2">
+          {MOVEMENT_TYPES.map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setSelectedType(type)}
+              aria-pressed={selectedType === type}
+              title={MAP_MARKER_LABELS[type]}
+              className={iconButtonClass(type)}
+            >
+              <MarkerGlyph iconType={type} />
+            </button>
+          ))}
+        </div>
+
+        {selectedType && !isMovementMarker(selectedType) && (
+          <input
+            type="text"
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+            placeholder={MAP_MARKER_LABELS[selectedType]}
+            maxLength={40}
+            className="mb-6 w-full border border-input bg-background px-2 py-1.5 text-sm outline-none focus:border-primary"
+          />
+        )}
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={handleCancel}>

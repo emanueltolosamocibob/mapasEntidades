@@ -91,9 +91,32 @@ export type MapMarkerIconType =
   | "arrow_down"
   | "arrow_left"
   | "arrow_right"
+  | "arrow_up_left"
+  | "arrow_up_right"
+  | "arrow_down_left"
+  | "arrow_down_right"
   | "danger"
   | "rally_point"
   | "help";
+
+// Marcadores de "movimiento" (flechas, incluidas diagonales) vs. de
+// "referencia" (el resto) -- MarkerCreateDialog.tsx los agrupa en
+// secciones separadas, y los de movimiento nunca llevan tag/label sobre
+// el mapa (ver mapMarkerIcon más abajo).
+const ARROW_TYPES: ReadonlySet<MapMarkerIconType> = new Set([
+  "arrow_up",
+  "arrow_down",
+  "arrow_left",
+  "arrow_right",
+  "arrow_up_left",
+  "arrow_up_right",
+  "arrow_down_left",
+  "arrow_down_right",
+]);
+
+export function isMovementMarker(iconType: MapMarkerIconType): boolean {
+  return ARROW_TYPES.has(iconType);
+}
 
 export const MAP_MARKER_LABELS: Record<MapMarkerIconType, string> = {
   friendly_base: "BASE AMIGA",
@@ -104,6 +127,10 @@ export const MAP_MARKER_LABELS: Record<MapMarkerIconType, string> = {
   arrow_down: "RETROCEDER",
   arrow_left: "IZQUIERDA",
   arrow_right: "DERECHA",
+  arrow_up_left: "NOROESTE",
+  arrow_up_right: "NORESTE",
+  arrow_down_left: "SUROESTE",
+  arrow_down_right: "SURESTE",
   danger: "PELIGRO",
   rally_point: "PUNTO DE ENCUENTRO",
   help: "AYUDA",
@@ -118,44 +145,92 @@ const MAP_MARKER_COLORS: Record<MapMarkerIconType, string> = {
   arrow_down: AMBER,
   arrow_left: AMBER,
   arrow_right: AMBER,
+  arrow_up_left: AMBER,
+  arrow_up_right: AMBER,
+  arrow_down_left: AMBER,
+  arrow_down_right: AMBER,
   danger: STALE_COLOR,
   rally_point: AMBER,
   help: STALE_COLOR,
 };
 
-// Paths tal cual los usa lucide-react (viewBox 24x24), mismos íconos que
-// se ofrecen en MarkerCreateDialog.tsx -- así el marcador en el mapa se ve
-// igual al botón que se tocó para crearlo, incluidas las flechas.
-const LUCIDE_MARKER_PATHS: Record<MapMarkerIconType, string> = {
-  friendly_base:
-    '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />',
-  enemy_base:
-    '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="M12 8v4" /><path d="M12 16h.01" />',
-  objective: '<circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />',
-  flag: '<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" />',
-  arrow_up: '<path d="m5 12 7-7 7 7" /><path d="M12 19V5" />',
-  arrow_down: '<path d="M12 5v14" /><path d="m19 12-7 7-7-7" />',
-  arrow_left: '<path d="m12 19-7-7 7-7" /><path d="M19 12H5" />',
-  arrow_right: '<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />',
-  danger:
-    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" />',
-  rally_point:
-    '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" />',
-  help: '<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /><path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" />',
+// Un solo triángulo sólido (mismo que ya usaban las 4 flechas cardinales)
+// rotado alrededor del centro para las 8 direcciones -- garantiza que las
+// 8 se vean como la misma forma, nada más que girada (a pedido de MAP-57:
+// "una al lado de otra en dirección del reloj").
+const ARROW_ANGLES: Record<
+  "arrow_up" | "arrow_up_right" | "arrow_right" | "arrow_down_right" |
+  "arrow_down" | "arrow_down_left" | "arrow_left" | "arrow_up_left",
+  number
+> = {
+  arrow_up: 0,
+  arrow_up_right: 45,
+  arrow_right: 90,
+  arrow_down_right: 135,
+  arrow_down: 180,
+  arrow_down_left: 225,
+  arrow_left: 270,
+  arrow_up_left: 315,
+};
+
+function arrowShape(angle: number): string {
+  return `<polygon points="9,2 16,16 2,16" fill="currentColor" transform="rotate(${angle} 9 9)" />`;
+}
+
+// Formas custom rellenas, bordes rectos, estilo stencil táctico (no los
+// íconos "de navegador" de una librería genérica) -- viewBox 18x18, mismo
+// que ya usan los íconos de rol de jugador (ROLE_SHAPE_SVG). "currentColor"
+// para poder reusar la misma definición tanto en el <svg> crudo que arma
+// mapMarkerIcon() para Leaflet como en el picker de MarkerCreateDialog.tsx
+// (vía dangerouslySetInnerHTML sobre este mismo string) -- una sola fuente
+// de verdad, garantiza que se vean idénticos en los dos lugares.
+export const MAP_MARKER_SHAPE_SVG: Record<MapMarkerIconType, string> = {
+  // Silueta de casa/base, sólida -- amigo/enemigo se diferencian por color
+  // (MAP_MARKER_COLORS), no por forma, mismo criterio que el resto del mapa.
+  friendly_base: '<polygon points="9,2 16,8 16,16 2,16 2,8" fill="currentColor" />',
+  enemy_base: '<polygon points="9,2 16,8 16,16 2,16 2,8" fill="currentColor" />',
+  // Blanco/bullseye: anillo relleno con hueco (evenodd) + punto central.
+  objective:
+    '<path fill-rule="evenodd" clip-rule="evenodd" d="M9 0a9 9 0 100 18A9 9 0 009 0Zm0 4a5 5 0 100 10A5 5 0 009 4Zm0 4a1 1 0 100 2 1 1 0 000-2Z" fill="currentColor" />',
+  flag: '<rect x="2" y="1" width="2" height="16" fill="currentColor" /><path d="M4 2 L16 5 L4 8 Z" fill="currentColor" />',
+  arrow_up: arrowShape(ARROW_ANGLES.arrow_up),
+  arrow_down: arrowShape(ARROW_ANGLES.arrow_down),
+  arrow_left: arrowShape(ARROW_ANGLES.arrow_left),
+  arrow_right: arrowShape(ARROW_ANGLES.arrow_right),
+  arrow_up_left: arrowShape(ARROW_ANGLES.arrow_up_left),
+  arrow_up_right: arrowShape(ARROW_ANGLES.arrow_up_right),
+  arrow_down_left: arrowShape(ARROW_ANGLES.arrow_down_left),
+  arrow_down_right: arrowShape(ARROW_ANGLES.arrow_down_right),
+  danger: '<polygon points="9,1 17,16 1,16" fill="currentColor" />',
+  rally_point: '<polygon points="9,1 16,5 16,13 9,17 2,13 2,5" fill="currentColor" />',
+  // Cruz de auxilio -- rellena, bordes rectos, sin curvas (la versión que
+  // mejor funcionó visualmente, se restaura tal cual).
+  help: '<rect x="7" y="2" width="4" height="14" fill="currentColor" /><rect x="2" y="7" width="14" height="4" fill="currentColor" />',
 };
 
 // Marcadores tácticos agregados por jugadores (MAP-57) -- label custom si lo
-// puso el usuario, o el nombre del tipo por default (ej. "BASE ENEMIGA").
+// puso el usuario, o el nombre del tipo por default (ej. "BASE ENEMIGA"). Las
+// flechas (movimiento) nunca llevan tag encima -- son puramente direccionales.
 export function mapMarkerIcon(iconType: MapMarkerIconType, label: string | null) {
   const color = MAP_MARKER_COLORS[iconType];
+  const svg = `<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" style="color:${color}">${MAP_MARKER_SHAPE_SVG[iconType]}</svg>`;
+
+  if (isMovementMarker(iconType)) {
+    return divIcon({
+      html: svg,
+      className: "tactical-marker-icon",
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    });
+  }
+
   const text = escapeHtml(label && label.trim() ? label.trim() : MAP_MARKER_LABELS[iconType]);
-  const paths = LUCIDE_MARKER_PATHS[iconType];
 
   return divIcon({
     html: `
       <div style="display:flex;flex-direction:column;align-items:center;width:120px;">
         <span style="font-family:'JetBrains Mono Variable',ui-monospace,monospace;font-size:10px;letter-spacing:0.05em;color:${color};text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,0.85);margin-bottom:2px;">${text}</span>
-        <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>
+        ${svg}
       </div>
     `,
     className: "tactical-marker-icon",
