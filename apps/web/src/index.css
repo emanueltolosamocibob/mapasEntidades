@@ -127,11 +127,31 @@ body {
   }
 }
 
-/* MapContainer tiene height: 70vh inline (MAP-55) — sin esto, al pedir
-   fullscreen el div crece pero el mapa queda con esa altura fija. */
-.leaflet-container:fullscreen {
+/* Pseudo-fullscreen aplicado a mano por FullscreenToggle (MapView.tsx) --
+   no la Fullscreen API nativa, iOS Safari no la soporta para elementos
+   genéricos. MapContainer tiene height: 70vh inline (MAP-55) y ni el
+   className ni el style de MapContainer son reactivos (ver
+   MapModeClassSync), por eso esto se aplica como clase con !important en
+   vez de props de React. z-index apenas debajo de los diálogos (2000) para
+   que MarkerCreateDialog/ConfirmDialog sigan por encima incluso en
+   fullscreen -- ya viven dentro del MapContainer (ver nota en MapView.tsx). */
+.leaflet-container.map-pseudo-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
+  z-index: 1500;
+}
+
+/* Sin esto, mantener presionado sobre un tile (una <img>) dispara el menú
+   contextual táctil del navegador (iOS: Copiar/Guardar imagen) antes de
+   que llegue a completarse el long-press de MarkerLongPress -- el picker
+   de marcadores nunca llegaba a abrirse (MAP-57). Ver también
+   preventDefault(contextmenu) en MarkerLongPress para Android. */
+.leaflet-container {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Modo topográfico/satelital (MapView.tsx, className aplicado a mano por

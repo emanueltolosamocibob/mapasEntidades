@@ -16,6 +16,7 @@ import { buildReplayTracks, computeMatchStats, type PositionHistoryRow } from ".
 import { cn } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import MapView from "../components/MapView";
+import Compass from "../components/Compass";
 import TacticalPanel from "../components/TacticalPanel";
 import ConfirmDialog from "../components/ConfirmDialog";
 
@@ -233,6 +234,7 @@ function PlayPage() {
           </div>
         </div>
         <div className="flex w-full flex-col gap-4 sm:w-64">
+          <Compass variant="inline" />
           <TacticalPanel title="Envío de posición">
             <div className="flex gap-1.5">
               {SEND_INTERVAL_OPTIONS.map((option) => (
