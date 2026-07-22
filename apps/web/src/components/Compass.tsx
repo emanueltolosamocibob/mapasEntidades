@@ -103,17 +103,26 @@ function useCompassHeading() {
   return { heading, permissionState, requestPermission };
 }
 
-function Compass() {
+// "overlay": flotando sobre el mapa, centrada abajo (uso original, ahora
+// solo mientras el mapa está en fullscreen -- ver MapView.tsx). "inline":
+// bloque normal dentro del flujo de la página, para vivir arriba del panel
+// de "Envío de posición" en PlayPage.tsx sin estar montada en el mapa.
+function Compass({ variant = "overlay" }: { variant?: "overlay" | "inline" }) {
   const { heading, permissionState, requestPermission } = useCompassHeading();
 
   if (permissionState === "idle" || permissionState === "unavailable") return null;
+
+  const positionClass =
+    variant === "overlay"
+      ? "absolute bottom-10 left-1/2 z-[1000] -translate-x-1/2"
+      : "relative w-full";
 
   if (permissionState === "needs-gesture") {
     return (
       <button
         type="button"
         onClick={requestPermission}
-        className="absolute bottom-10 left-1/2 z-[1000] -translate-x-1/2 border border-primary bg-background/90 px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] text-primary hover:bg-primary/10"
+        className={`${positionClass} border border-primary bg-background/90 px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] text-primary hover:bg-primary/10`}
       >
         ACTIVAR BRÚJULA
       </button>
@@ -123,9 +132,12 @@ function Compass() {
   // Sin señal todavía (evento no disparó ni una vez): centra en N en vez de
   // no mostrar nada, se corrige solo apenas llega el primer evento.
   const offset = (heading ?? 0) * PX_PER_DEGREE;
+  const sizeClass = variant === "overlay" ? "w-64 sm:w-96" : "w-full";
 
   return (
-    <div className="pointer-events-none absolute bottom-10 left-1/2 z-[1000] h-9 w-64 -translate-x-1/2 overflow-hidden border border-primary bg-background/90 sm:w-96">
+    <div
+      className={`pointer-events-none ${positionClass} ${sizeClass} h-9 overflow-hidden border border-primary bg-background/90`}
+    >
       <div
         className="absolute top-0 left-1/2 h-full"
         style={{ transform: `translateX(calc(-50% - ${offset}px))` }}

@@ -199,44 +199,39 @@ function MapModeToggle({
   );
 }
 
-function FullscreenToggle({ onChange }: { onChange: (active: boolean) => void }) {
+// Pseudo-fullscreen por CSS en vez de la Fullscreen API nativa
+// (element.requestFullscreen()) -- iOS Safari no la soporta para elementos
+// genéricos (solo <video> tiene su propio fullscreen), así que el botón no
+// hacía nada en mobile. Con un toggle de estado + clase CSS funciona igual
+// en todos lados, y de paso evita el gotcha de que ni className ni style de
+// MapContainer son reactivos (ver MapModeClassSync) -- el estado vive en
+// MapView (isFullscreen prop) y este componente solo aplica el efecto.
+function FullscreenToggle({
+  isFullscreen,
+  onToggle,
+}: {
+  isFullscreen: boolean;
+  onToggle: () => void;
+}) {
   const map = useMap();
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (buttonRef.current) DomEvent.disableClickPropagation(buttonRef.current);
   }, []);
 
-  // Leaflet no re-mide los tiles solo porque el contenedor cambió de tamaño
-  // vía CSS (:fullscreen) — hay que forzar invalidateSize en la transición,
-  // y también sincronizar el ícono (y el label) si el usuario sale con Esc
-  // en vez de clickear el botón. El listener solo dispara en cambios reales,
-  // nunca en el mount, así que no hace falta filtrar la primera llamada.
   useEffect(() => {
-    function handleFullscreenChange() {
-      const active = document.fullscreenElement === map.getContainer();
-      setIsFullscreen(active);
-      onChange(active);
-      setTimeout(() => map.invalidateSize(), 0);
-    }
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, [map, onChange]);
-
-  function handleClick() {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      map.getContainer().requestFullscreen();
-    }
-  }
+    map.getContainer().classList.toggle("map-pseudo-fullscreen", isFullscreen);
+    // El contenedor cambia de tamaño vía CSS, Leaflet no se entera solo.
+    const timeout = setTimeout(() => map.invalidateSize(), 50);
+    return () => clearTimeout(timeout);
+  }, [map, isFullscreen]);
 
   return (
     <button
       ref={buttonRef}
       type="button"
-      onClick={handleClick}
+      onClick={onToggle}
       aria-pressed={isFullscreen}
       aria-label="Pantalla completa"
       title="Pantalla completa"
@@ -284,6 +279,13 @@ function MarkerLongPress({
       const dx = event.containerPoint.x - startPointRef.current.x;
       const dy = event.containerPoint.y - startPointRef.current.y;
       if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE_PX) clear();
+    },
+    // Sin esto, mantener presionado sobre un tile (una <img>) dispara el
+    // menú contextual nativo del navegador (Android: "descargar imagen"),
+    // que se come el gesto y el picker nunca llega a abrirse. En iOS hace
+    // falta además -webkit-touch-callout:none por CSS (ver index.css).
+    contextmenu(event) {
+      event.originalEvent.preventDefault();
     },
   });
 
@@ -485,6 +487,7 @@ function MapView({
     : DEFAULT_CENTER;
   const [showDistanceLines, setShowDistanceLines] = useState(false);
   const [mapMode, setMapMode] = useState<"dark" | "topo" | "satellite">("dark");
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [statusLabels, setStatusLabels] = useState<{ id: number; text: string; fading: boolean }[]>(
     []
   );
@@ -573,6 +576,23 @@ function MapView({
     showStatus(`Vista: ${MAP_MODE_LABEL[next]}`);
   }
 
+  function toggleFullscreen() {
+    const next = !isFullscreen;
+    setIsFullscreen(next);
+    showStatus(`Fullscreen: ${next ? "ON" : "OFF"}`);
+  }
+
+  // Pseudo-fullscreen por CSS (ver FullscreenToggle) -- a diferencia de la
+  // Fullscreen API nativa, Esc no lo cierra solo, hay que escucharlo a mano.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsFullscreen(false);
+    }
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isFullscreen]);
+
   return (
     <MapContainer
       center={initialCenter}
@@ -647,13 +667,15 @@ function MapView({
       {canEditMarkers && <MarkerLongPress onLongPress={setPendingMarkerPoint} />}
       <MapModeClassSync mode={mapMode} />
       <CenterReticle />
-      <Compass />
+      {/* La brújula "de verdad" vive arriba del panel de "Envío de posición"
+          en PlayPage.tsx (no montada en el mapa) -- esta copia solo se ve
+          en fullscreen, donde el resto de la página (sidebar incluido)
+          queda tapado por el mapa (ver .map-pseudo-fullscreen). */}
+      {isFullscreen && <Compass variant="overlay" />}
       <TacticalZoomControl positions={positions} restriction={restriction} />
       <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
       <MapModeToggle mode={mapMode} onToggle={cycleMapMode} />
-      <FullscreenToggle
-        onChange={(active) => showStatus(`Fullscreen: ${active ? "ON" : "OFF"}`)}
-      />
+      <FullscreenToggle isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
       <RecenterButton
         className="top-3 right-14 bottom-auto left-auto"
         onPress={() => showStatus("Centrando en mi posición...")}
