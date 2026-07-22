@@ -369,6 +369,7 @@ function MapView({
       {showTopo ? (
         <TileLayer
           key="topo"
+          className="map-tiles-topo-dark"
           url={TOPO_URL}
           maxZoom={MAX_ZOOM}
           maxNativeZoom={TOPO_MAX_NATIVE_ZOOM}
