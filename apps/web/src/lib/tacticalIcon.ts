@@ -136,7 +136,7 @@ export const MAP_MARKER_LABELS: Record<MapMarkerIconType, string> = {
   help: "AYUDA",
 };
 
-const MAP_MARKER_COLORS: Record<MapMarkerIconType, string> = {
+export const MAP_MARKER_COLORS: Record<MapMarkerIconType, string> = {
   friendly_base: AMBER,
   enemy_base: ENEMY_COLOR,
   objective: AMBER,
