@@ -13,6 +13,7 @@ const REFERENCE_TYPES: MapMarkerIconType[] = [
   "enemy_base",
   "objective",
   "flag",
+  "hold_position",
   "danger",
   "rally_point",
   "help",

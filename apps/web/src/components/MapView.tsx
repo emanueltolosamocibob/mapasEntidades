@@ -292,6 +292,20 @@ function MarkerLongPress({
   return null;
 }
 
+// react-leaflet v5 solo lee el className de MapContainer en el mount inicial
+// (useState sin setter en su código fuente) -- pasarlo como prop reactiva no
+// funciona, hay que tocar el classList del contenedor a mano vía useMap(),
+// mismo patrón que FullscreenToggle.
+function MapModeClassSync({ mode }: { mode: "dark" | "topo" | "satellite" }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.getContainer().classList.toggle("map-mode-bright", mode !== "dark");
+  }, [map, mode]);
+
+  return null;
+}
+
 function isOutOfBounds(position: PlayerPosition, restriction: Restriction | null) {
   if (!restriction) return false;
   const distance = latLng(position.lat, position.lng).distanceTo(
@@ -540,10 +554,6 @@ function MapView({
       maxBoundsViscosity={1.0}
       zoomControl={false}
       style={{ height: "70vh", width: "100%" }}
-      // Topo/satelital son fondos "ruidosos" (imagen real, muchos colores) --
-      // sin esto, jugadores/marcadores/líneas se pierden contra el fondo.
-      // Ver .map-mode-bright en index.css.
-      className={mapMode !== "dark" ? "map-mode-bright" : undefined}
     >
       {mapMode === "topo" ? (
         <TileLayer
@@ -608,6 +618,7 @@ function MapView({
         />
       ))}
       {canEditMarkers && <MarkerLongPress onLongPress={setPendingMarkerPoint} />}
+      <MapModeClassSync mode={mapMode} />
       <Compass />
       <TacticalZoomControl positions={positions} restriction={restriction} />
       <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />

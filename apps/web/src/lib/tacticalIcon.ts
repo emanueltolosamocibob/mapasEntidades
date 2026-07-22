@@ -87,6 +87,7 @@ export type MapMarkerIconType =
   | "enemy_base"
   | "objective"
   | "flag"
+  | "hold_position"
   | "arrow_up"
   | "arrow_down"
   | "arrow_left"
@@ -122,7 +123,8 @@ export const MAP_MARKER_LABELS: Record<MapMarkerIconType, string> = {
   friendly_base: "BASE AMIGA",
   enemy_base: "BASE ENEMIGA",
   objective: "OBJETIVO",
-  flag: "BANDERA",
+  flag: "VIGILAR",
+  hold_position: "MANTENER POSICIÓN",
   arrow_up: "AVANZAR",
   arrow_down: "RETROCEDER",
   arrow_left: "IZQUIERDA",
@@ -141,6 +143,7 @@ export const MAP_MARKER_COLORS: Record<MapMarkerIconType, string> = {
   enemy_base: ENEMY_COLOR,
   objective: AMBER,
   flag: AMBER,
+  hold_position: AMBER,
   arrow_up: AMBER,
   arrow_down: AMBER,
   arrow_left: AMBER,
@@ -198,8 +201,13 @@ export const MAP_MARKER_SHAPE_SVG: Record<MapMarkerIconType, { viewBox: string; 
   objective: filledShape(
     '<path fill-rule="evenodd" clip-rule="evenodd" d="M9 0a9 9 0 100 18A9 9 0 009 0Zm0 4a5 5 0 100 10A5 5 0 009 4Zm0 4a1 1 0 100 2 1 1 0 000-2Z" fill="currentColor" />'
   ),
+  // Torre de vigilancia: cabina arriba + patas en trapecio (VIGILAR).
   flag: filledShape(
-    '<rect x="2" y="1" width="2" height="16" fill="currentColor" /><path d="M4 2 L16 5 L4 8 Z" fill="currentColor" />'
+    '<rect x="6" y="2" width="6" height="5" fill="currentColor" /><polygon points="3,17 15,17 11,7 7,7" fill="currentColor" />'
+  ),
+  // Escudo: mantener posición, postura defensiva.
+  hold_position: filledShape(
+    '<polygon points="2,2 16,2 16,9 9,17 2,9" fill="currentColor" />'
   ),
   arrow_up: arrowShape(ARROW_PATHS.arrow_up),
   arrow_down: arrowShape(ARROW_PATHS.arrow_down),
@@ -224,7 +232,7 @@ export const MAP_MARKER_SHAPE_SVG: Record<MapMarkerIconType, { viewBox: string; 
 export function mapMarkerIcon(iconType: MapMarkerIconType, label: string | null) {
   const color = MAP_MARKER_COLORS[iconType];
   const { viewBox, inner } = MAP_MARKER_SHAPE_SVG[iconType];
-  const svg = `<svg width="18" height="18" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" style="color:${color}">${inner}</svg>`;
+  const svg = `<svg class="tactical-marker-glyph" width="18" height="18" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" style="color:${color}">${inner}</svg>`;
 
   if (isMovementMarker(iconType)) {
     return divIcon({
@@ -274,7 +282,7 @@ export function playerMarkerIcon(
       <div style="display:flex;flex-direction:column;align-items:center;width:100px;">
         <span class="tactical-marker-label" style="font-family:'JetBrains Mono Variable',ui-monospace,monospace;font-size:10px;letter-spacing:0.05em;color:${color};text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.85);margin-bottom:2px;">${label}</span>
         ${staleTag}
-        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">${shape}</svg>
+        <svg class="tactical-marker-glyph" width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">${shape}</svg>
       </div>
     `,
     className: "tactical-marker-icon",

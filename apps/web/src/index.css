@@ -134,22 +134,21 @@ body {
   height: 100vh !important;
 }
 
-/* Modo topográfico/satelital (MapView.tsx, className condicional en
-   MapContainer): fondos "ruidosos" con muchos colores propios, a
-   diferencia del dark liso de CARTO -- jugadores, marcadores y líneas de
-   distancia se pierden sin un contorno oscuro marcado. drop-shadow (no
-   box-shadow) porque son íconos/svg, no cajas rectangulares. */
-.map-mode-bright .tactical-marker-icon {
-  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000);
+/* Modo topográfico/satelital (MapView.tsx, className aplicado a mano por
+   MapModeClassSync -- ver nota ahí sobre por qué no alcanza con la prop
+   className de MapContainer): fondos "ruidosos" con muchos colores
+   propios, a diferencia del dark liso de CARTO -- jugadores, marcadores y
+   líneas de distancia se pierden sin un fondo marcado. Fondo sólido
+   directo (mismo gris que el resto de los paneles de la UI, no un
+   drop-shadow/blur) detrás del ícono. Sin padding: cambiaría el tamaño de
+   la caja y correría el iconAnchor calculado para el tamaño original del
+   SVG. */
+.map-mode-bright .tactical-marker-glyph {
+  background: color-mix(in oklch, var(--card) 85%, transparent);
 }
-.map-mode-bright .leaflet-interactive {
-  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000);
-}
-/* El drop-shadow del ícono no alcanza para el texto del tag (nickname,
-   tag de marcador, "hace X") -- se le suma un fondo sólido directo,
-   igual que hace un HUD real, no solo contorno. */
+/* Mismo fondo para el texto del tag (nickname, tag de marcador, "hace X"). */
 .map-mode-bright .tactical-marker-label {
-  background: rgba(0, 0, 0, 0.75);
+  background: color-mix(in oklch, var(--card) 90%, transparent);
   padding: 1px 4px;
 }
 
