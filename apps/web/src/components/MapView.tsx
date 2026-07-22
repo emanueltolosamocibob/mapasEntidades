@@ -12,6 +12,7 @@ import { DomEvent, latLng, latLngBounds, point, type LatLngBounds } from "leafle
 import { Maximize, Minimize, Minus, Mountain, Plus, Waypoints } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
+import Compass from "./Compass";
 import { playerMarkerIcon, distanceLabelIcon, ENEMY_COLOR } from "../lib/tacticalIcon";
 
 type PlayerPosition = {
@@ -458,6 +459,7 @@ function MapView({
           )}
         />
       ))}
+      <Compass />
       <TacticalZoomControl positions={positions} restriction={restriction} />
       <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
       <TopoToggle enabled={showTopo} onToggle={toggleTopo} />
