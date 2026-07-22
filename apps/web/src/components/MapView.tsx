@@ -189,7 +189,7 @@ function TrailToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => 
       aria-pressed={enabled}
       aria-label="Mostrar rastro de jugadores"
       title="Mostrar rastro de jugadores"
-      className={`absolute top-3 right-[188px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+      className={`absolute top-3 right-14 z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
         enabled ? "bg-primary/20" : ""
       }`}
     >
@@ -286,7 +286,7 @@ function FullscreenToggle({
       aria-pressed={isFullscreen}
       aria-label="Pantalla completa"
       title="Pantalla completa"
-      className="absolute top-3 right-[144px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
+      className="absolute top-3 right-[188px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
     >
       {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
     </button>
@@ -740,7 +740,7 @@ function MapView({
       <MapModeToggle mode={mapMode} onToggle={cycleMapMode} />
       <FullscreenToggle isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
       <RecenterButton
-        className="top-3 right-14 bottom-auto left-auto"
+        className="top-3 right-[144px] bottom-auto left-auto"
         onPress={() => showStatus("Centrando en mi posición...")}
       />
       {statusLabels.length > 0 && (
