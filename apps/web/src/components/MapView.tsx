@@ -13,7 +13,18 @@ import { Maximize, Minimize, Minus, Mountain, Plus, Waypoints } from "lucide-rea
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
 import Compass from "./Compass";
-import { playerMarkerIcon, distanceLabelIcon, ENEMY_COLOR } from "../lib/tacticalIcon";
+import ConfirmDialog from "./ConfirmDialog";
+import MarkerCreateDialog from "./MarkerCreateDialog";
+import {
+  playerMarkerIcon,
+  distanceLabelIcon,
+  mapMarkerIcon,
+  MAP_MARKER_LABELS,
+  ENEMY_COLOR,
+  type MapMarkerIconType,
+} from "../lib/tacticalIcon";
+import { useMapMarkers, type MapMarker } from "../hooks/useMapMarkers";
+import { useMapMarkerActions } from "../hooks/useMapMarkerActions";
 
 type PlayerPosition = {
   entityId: string;
@@ -206,6 +217,51 @@ function FullscreenToggle({ onChange }: { onChange: (active: boolean) => void })
   );
 }
 
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
+
+// Leaflet normaliza touch a eventos de mouse (mousedown/mouseup/mousemove),
+// así que este mismo listener sirve para desktop y mobile sin lógica
+// separada de touchstart/touchend. Si el dedo/mouse se mueve más de la
+// tolerancia antes de que se cumpla el tiempo, se cancela -- así no
+// confunde un pan/drag del mapa con un "mantener presionado" (MAP-57).
+function MarkerLongPress({
+  onLongPress,
+}: {
+  onLongPress: (point: { lat: number; lng: number }) => void;
+}) {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startPointRef = useRef<{ x: number; y: number } | null>(null);
+
+  function clear() {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = null;
+    startPointRef.current = null;
+  }
+
+  useMapEvents({
+    mousedown(event) {
+      startPointRef.current = { x: event.containerPoint.x, y: event.containerPoint.y };
+      timeoutRef.current = setTimeout(() => {
+        onLongPress({ lat: event.latlng.lat, lng: event.latlng.lng });
+        clear();
+      }, LONG_PRESS_MS);
+    },
+    mouseup: clear,
+    movestart: clear,
+    mousemove(event) {
+      if (!startPointRef.current) return;
+      const dx = event.containerPoint.x - startPointRef.current.x;
+      const dy = event.containerPoint.y - startPointRef.current.y;
+      if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE_PX) clear();
+    },
+  });
+
+  useEffect(() => clear, []);
+
+  return null;
+}
+
 function isOutOfBounds(position: PlayerPosition, restriction: Restriction | null) {
   if (!restriction) return false;
   const distance = latLng(position.lat, position.lng).distanceTo(
@@ -331,6 +387,8 @@ function MapView({
   restriction,
   myTeamId,
   teamColors,
+  sessionId,
+  userId,
 }: {
   positions: PlayerPosition[];
   restriction: Restriction | null;
@@ -343,6 +401,13 @@ function MapView({
   // (panel de anfitrión, "ver todos los equipos"). Tiene prioridad sobre
   // la lógica de myTeamId si ambos se pasan.
   teamColors?: Record<string, string>;
+  // Marcadores tácticos (MAP-57): sesión + usuario actual. Sin ambos +
+  // myTeamId, los marcadores se ven (si sessionId está) pero no se puede
+  // agregar/quitar -- caso del panel de anfitrión con "ver todos los
+  // equipos", donde no hay un team_id único al que atribuir un marcador
+  // nuevo.
+  sessionId?: string;
+  userId?: string;
 }) {
   const initialCenter: [number, number] = restriction
     ? [restriction.lat, restriction.lng]
@@ -354,6 +419,37 @@ function MapView({
   );
   const statusTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const statusIdRef = useRef(0);
+
+  const { markers } = useMapMarkers(sessionId);
+  const { addMarker, removeMarker } = useMapMarkerActions();
+  const canEditMarkers = Boolean(sessionId && myTeamId && userId);
+  const [pendingMarkerPoint, setPendingMarkerPoint] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [markerPendingDelete, setMarkerPendingDelete] = useState<MapMarker | null>(null);
+
+  async function handleConfirmAddMarker(iconType: MapMarkerIconType, label: string) {
+    if (!pendingMarkerPoint || !sessionId || !myTeamId || !userId) return;
+    const ok = await addMarker({
+      sessionId,
+      teamId: myTeamId,
+      userId,
+      iconType,
+      label,
+      lat: pendingMarkerPoint.lat,
+      lng: pendingMarkerPoint.lng,
+    });
+    setPendingMarkerPoint(null);
+    if (ok) showStatus(`Marcador agregado: ${MAP_MARKER_LABELS[iconType]}`);
+  }
+
+  async function handleConfirmDeleteMarker() {
+    if (!markerPendingDelete) return;
+    const ok = await removeMarker(markerPendingDelete.id);
+    setMarkerPendingDelete(null);
+    if (ok) showStatus("Marcador eliminado");
+  }
 
   // Fuerza un re-render cada 5s para que el tag de "hace X" (MAP-51) se
   // actualice con el correr del tiempo, aunque no llegue ninguna
@@ -407,84 +503,113 @@ function MapView({
   }
 
   return (
-    <MapContainer
-      center={initialCenter}
-      zoom={13}
-      maxZoom={MAX_ZOOM}
-      maxBoundsViscosity={1.0}
-      zoomControl={false}
-      style={{ height: "70vh", width: "100%" }}
-    >
-      {showTopo ? (
-        <TileLayer
-          key="topo"
-          className="map-tiles-topo-dark"
-          url={TOPO_URL}
-          maxZoom={MAX_ZOOM}
-          maxNativeZoom={TOPO_MAX_NATIVE_ZOOM}
-          attribution={TOPO_ATTRIBUTION}
-        />
-      ) : (
-        <TileLayer
-          key="dark"
-          className="map-tiles-hc"
-          url={CARTO_DARK_URL}
-          maxZoom={MAX_ZOOM}
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        />
-      )}
-      {restriction ? (
-        <>
-          <FitToRestriction restriction={restriction} />
-          <Circle
-            center={[restriction.lat, restriction.lng]}
-            radius={restriction.radiusM}
-            pathOptions={{ color: "#F5A623", weight: 2, fillOpacity: 0.05 }}
+    <>
+      <MapContainer
+        center={initialCenter}
+        zoom={13}
+        maxZoom={MAX_ZOOM}
+        maxBoundsViscosity={1.0}
+        zoomControl={false}
+        style={{ height: "70vh", width: "100%" }}
+      >
+        {showTopo ? (
+          <TileLayer
+            key="topo"
+            className="map-tiles-topo-dark"
+            url={TOPO_URL}
+            maxZoom={MAX_ZOOM}
+            maxNativeZoom={TOPO_MAX_NATIVE_ZOOM}
+            attribution={TOPO_ATTRIBUTION}
           />
-        </>
-      ) : (
-        <FitToPositions positions={positions} />
-      )}
-      {showDistanceLines && <DistanceLines positions={positions} />}
-      {positions.map((position) => (
-        <Marker
-          key={position.entityId}
-          position={[position.lat, position.lng]}
-          icon={playerMarkerIcon(
-            position.nickname,
-            position.role,
-            isOutOfBounds(position, restriction),
-            markerColorFor(position, myTeamId, teamColors),
-            position.recordedAt
-          )}
+        ) : (
+          <TileLayer
+            key="dark"
+            className="map-tiles-hc"
+            url={CARTO_DARK_URL}
+            maxZoom={MAX_ZOOM}
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          />
+        )}
+        {restriction ? (
+          <>
+            <FitToRestriction restriction={restriction} />
+            <Circle
+              center={[restriction.lat, restriction.lng]}
+              radius={restriction.radiusM}
+              pathOptions={{ color: "#F5A623", weight: 2, fillOpacity: 0.05 }}
+            />
+          </>
+        ) : (
+          <FitToPositions positions={positions} />
+        )}
+        {showDistanceLines && <DistanceLines positions={positions} />}
+        {positions.map((position) => (
+          <Marker
+            key={position.entityId}
+            position={[position.lat, position.lng]}
+            icon={playerMarkerIcon(
+              position.nickname,
+              position.role,
+              isOutOfBounds(position, restriction),
+              markerColorFor(position, myTeamId, teamColors),
+              position.recordedAt
+            )}
+          />
+        ))}
+        {markers.map((marker) => (
+          <Marker
+            key={marker.id}
+            position={[marker.lat, marker.lng]}
+            icon={mapMarkerIcon(marker.iconType, marker.label)}
+            eventHandlers={
+              canEditMarkers ? { click: () => setMarkerPendingDelete(marker) } : undefined
+            }
+          />
+        ))}
+        {canEditMarkers && <MarkerLongPress onLongPress={setPendingMarkerPoint} />}
+        <Compass />
+        <TacticalZoomControl positions={positions} restriction={restriction} />
+        <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
+        <TopoToggle enabled={showTopo} onToggle={toggleTopo} />
+        <FullscreenToggle
+          onChange={(active) => showStatus(`Fullscreen: ${active ? "ON" : "OFF"}`)}
         />
-      ))}
-      <Compass />
-      <TacticalZoomControl positions={positions} restriction={restriction} />
-      <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
-      <TopoToggle enabled={showTopo} onToggle={toggleTopo} />
-      <FullscreenToggle
-        onChange={(active) => showStatus(`Fullscreen: ${active ? "ON" : "OFF"}`)}
+        <RecenterButton
+          className="top-3 right-14 bottom-auto left-auto"
+          onPress={() => showStatus("Centrando en mi posición...")}
+        />
+        {statusLabels.length > 0 && (
+          <div className="pointer-events-none absolute bottom-16 left-3 z-[1000] flex flex-col gap-1">
+            {statusLabels.map((item) => (
+              <div
+                key={item.id}
+                className={`text-xs font-bold tracking-[0.15em] text-white transition-opacity duration-300 ${
+                  item.fading ? "opacity-0" : "opacity-100"
+                }`}
+              >
+                {item.text}
+              </div>
+            ))}
+          </div>
+        )}
+      </MapContainer>
+      <MarkerCreateDialog
+        open={pendingMarkerPoint !== null}
+        onCancel={() => setPendingMarkerPoint(null)}
+        onConfirm={handleConfirmAddMarker}
       />
-      <RecenterButton
-        className="top-3 right-14 bottom-auto left-auto"
-        onPress={() => showStatus("Centrando en mi posición...")}
+      <ConfirmDialog
+        open={markerPendingDelete !== null}
+        title="Quitar marcador"
+        message={`¿Quitar "${
+          markerPendingDelete
+            ? markerPendingDelete.label || MAP_MARKER_LABELS[markerPendingDelete.iconType]
+            : ""
+        }" del mapa?`}
+        onConfirm={handleConfirmDeleteMarker}
+        onCancel={() => setMarkerPendingDelete(null)}
       />
-      {statusLabels.length > 0 && (
-        <div className="pointer-events-none absolute bottom-16 left-3 z-[1000] flex flex-col gap-1">
-          {statusLabels.map((item) => (
-            <div
-              key={item.id}
-              className={`text-xs font-bold tracking-[0.15em] text-white transition-opacity duration-300 ${
-                item.fading ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              {item.text}
-            </div>
-          ))}
-        </div>
-      )}
-    </MapContainer>
+    </>
   );
 }
 
