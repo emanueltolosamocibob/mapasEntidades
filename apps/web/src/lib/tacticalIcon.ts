@@ -154,58 +154,68 @@ const MAP_MARKER_COLORS: Record<MapMarkerIconType, string> = {
   help: STALE_COLOR,
 };
 
-// Un solo triángulo sólido (mismo que ya usaban las 4 flechas cardinales)
-// rotado alrededor del centro para las 8 direcciones -- garantiza que las
-// 8 se vean como la misma forma, nada más que girada (a pedido de MAP-57:
-// "una al lado de otra en dirección del reloj").
-const ARROW_ANGLES: Record<
-  "arrow_up" | "arrow_up_right" | "arrow_right" | "arrow_down_right" |
-  "arrow_down" | "arrow_down_left" | "arrow_left" | "arrow_up_left",
-  number
+// Flechas: mismos paths que lucide-react (arrow-up/-down/-left/-right y las
+// 4 diagonales), como estaban antes del rediseño de íconos "stencil" --
+// las de referencia sí pasan a ser custom rellenas, pero las flechas se
+// vuelven a como eran.
+const ARROW_PATHS: Record<
+  "arrow_up" | "arrow_down" | "arrow_left" | "arrow_right" |
+  "arrow_up_left" | "arrow_up_right" | "arrow_down_left" | "arrow_down_right",
+  string
 > = {
-  arrow_up: 0,
-  arrow_up_right: 45,
-  arrow_right: 90,
-  arrow_down_right: 135,
-  arrow_down: 180,
-  arrow_down_left: 225,
-  arrow_left: 270,
-  arrow_up_left: 315,
+  arrow_up: '<path d="m5 12 7-7 7 7" /><path d="M12 19V5" />',
+  arrow_down: '<path d="M12 5v14" /><path d="m19 12-7 7-7-7" />',
+  arrow_left: '<path d="m12 19-7-7 7-7" /><path d="M19 12H5" />',
+  arrow_right: '<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />',
+  arrow_up_left: '<path d="M7 17V7h10" /><path d="M17 17 7 7" />',
+  arrow_up_right: '<path d="M7 7h10v10" /><path d="M7 17 17 7" />',
+  arrow_down_left: '<path d="M17 7 7 17" /><path d="M17 17H7V7" />',
+  arrow_down_right: '<path d="m7 7 10 10" /><path d="M17 7v10H7" />',
 };
 
-function arrowShape(angle: number): string {
-  return `<polygon points="9,2 16,16 2,16" fill="currentColor" transform="rotate(${angle} 9 9)" />`;
+function arrowShape(paths: string): { viewBox: string; inner: string } {
+  return {
+    viewBox: "0 0 24 24",
+    inner: `<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</g>`,
+  };
 }
 
-// Formas custom rellenas, bordes rectos, estilo stencil táctico (no los
-// íconos "de navegador" de una librería genérica) -- viewBox 18x18, mismo
-// que ya usan los íconos de rol de jugador (ROLE_SHAPE_SVG). "currentColor"
-// para poder reusar la misma definición tanto en el <svg> crudo que arma
-// mapMarkerIcon() para Leaflet como en el picker de MarkerCreateDialog.tsx
-// (vía dangerouslySetInnerHTML sobre este mismo string) -- una sola fuente
-// de verdad, garantiza que se vean idénticos en los dos lugares.
-export const MAP_MARKER_SHAPE_SVG: Record<MapMarkerIconType, string> = {
+function filledShape(inner: string): { viewBox: string; inner: string } {
+  return { viewBox: "0 0 18 18", inner };
+}
+
+// Formas compartidas entre el mapa y el picker (MarkerCreateDialog.tsx la
+// reusa vía dangerouslySetInnerHTML) -- una sola fuente de verdad, se ven
+// idénticas en los dos lugares. Los de "referencia" son custom rellenos,
+// bordes rectos, estilo stencil táctico (viewBox 18x18, mismo que
+// ROLE_SHAPE_SVG); las flechas quedan como estaban (lucide, viewBox 24x24).
+export const MAP_MARKER_SHAPE_SVG: Record<MapMarkerIconType, { viewBox: string; inner: string }> = {
   // Silueta de casa/base, sólida -- amigo/enemigo se diferencian por color
   // (MAP_MARKER_COLORS), no por forma, mismo criterio que el resto del mapa.
-  friendly_base: '<polygon points="9,2 16,8 16,16 2,16 2,8" fill="currentColor" />',
-  enemy_base: '<polygon points="9,2 16,8 16,16 2,16 2,8" fill="currentColor" />',
+  friendly_base: filledShape('<polygon points="9,2 16,8 16,16 2,16 2,8" fill="currentColor" />'),
+  enemy_base: filledShape('<polygon points="9,2 16,8 16,16 2,16 2,8" fill="currentColor" />'),
   // Blanco/bullseye: anillo relleno con hueco (evenodd) + punto central.
-  objective:
-    '<path fill-rule="evenodd" clip-rule="evenodd" d="M9 0a9 9 0 100 18A9 9 0 009 0Zm0 4a5 5 0 100 10A5 5 0 009 4Zm0 4a1 1 0 100 2 1 1 0 000-2Z" fill="currentColor" />',
-  flag: '<rect x="2" y="1" width="2" height="16" fill="currentColor" /><path d="M4 2 L16 5 L4 8 Z" fill="currentColor" />',
-  arrow_up: arrowShape(ARROW_ANGLES.arrow_up),
-  arrow_down: arrowShape(ARROW_ANGLES.arrow_down),
-  arrow_left: arrowShape(ARROW_ANGLES.arrow_left),
-  arrow_right: arrowShape(ARROW_ANGLES.arrow_right),
-  arrow_up_left: arrowShape(ARROW_ANGLES.arrow_up_left),
-  arrow_up_right: arrowShape(ARROW_ANGLES.arrow_up_right),
-  arrow_down_left: arrowShape(ARROW_ANGLES.arrow_down_left),
-  arrow_down_right: arrowShape(ARROW_ANGLES.arrow_down_right),
-  danger: '<polygon points="9,1 17,16 1,16" fill="currentColor" />',
-  rally_point: '<polygon points="9,1 16,5 16,13 9,17 2,13 2,5" fill="currentColor" />',
+  objective: filledShape(
+    '<path fill-rule="evenodd" clip-rule="evenodd" d="M9 0a9 9 0 100 18A9 9 0 009 0Zm0 4a5 5 0 100 10A5 5 0 009 4Zm0 4a1 1 0 100 2 1 1 0 000-2Z" fill="currentColor" />'
+  ),
+  flag: filledShape(
+    '<rect x="2" y="1" width="2" height="16" fill="currentColor" /><path d="M4 2 L16 5 L4 8 Z" fill="currentColor" />'
+  ),
+  arrow_up: arrowShape(ARROW_PATHS.arrow_up),
+  arrow_down: arrowShape(ARROW_PATHS.arrow_down),
+  arrow_left: arrowShape(ARROW_PATHS.arrow_left),
+  arrow_right: arrowShape(ARROW_PATHS.arrow_right),
+  arrow_up_left: arrowShape(ARROW_PATHS.arrow_up_left),
+  arrow_up_right: arrowShape(ARROW_PATHS.arrow_up_right),
+  arrow_down_left: arrowShape(ARROW_PATHS.arrow_down_left),
+  arrow_down_right: arrowShape(ARROW_PATHS.arrow_down_right),
+  danger: filledShape('<polygon points="9,1 17,16 1,16" fill="currentColor" />'),
+  rally_point: filledShape('<polygon points="9,1 16,5 16,13 9,17 2,13 2,5" fill="currentColor" />'),
   // Cruz de auxilio -- rellena, bordes rectos, sin curvas (la versión que
   // mejor funcionó visualmente, se restaura tal cual).
-  help: '<rect x="7" y="2" width="4" height="14" fill="currentColor" /><rect x="2" y="7" width="14" height="4" fill="currentColor" />',
+  help: filledShape(
+    '<rect x="7" y="2" width="4" height="14" fill="currentColor" /><rect x="2" y="7" width="14" height="4" fill="currentColor" />'
+  ),
 };
 
 // Marcadores tácticos agregados por jugadores (MAP-57) -- label custom si lo
@@ -213,7 +223,8 @@ export const MAP_MARKER_SHAPE_SVG: Record<MapMarkerIconType, string> = {
 // flechas (movimiento) nunca llevan tag encima -- son puramente direccionales.
 export function mapMarkerIcon(iconType: MapMarkerIconType, label: string | null) {
   const color = MAP_MARKER_COLORS[iconType];
-  const svg = `<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" style="color:${color}">${MAP_MARKER_SHAPE_SVG[iconType]}</svg>`;
+  const { viewBox, inner } = MAP_MARKER_SHAPE_SVG[iconType];
+  const svg = `<svg width="18" height="18" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" style="color:${color}">${inner}</svg>`;
 
   if (isMovementMarker(iconType)) {
     return divIcon({

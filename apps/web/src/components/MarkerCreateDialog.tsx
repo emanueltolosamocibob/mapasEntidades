@@ -33,13 +33,8 @@ const MOVEMENT_TYPES: MapMarkerIconType[] = [
 // Leaflet -- una sola fuente de verdad, el botón se ve idéntico al
 // marcador que termina puesto en el mapa.
 function MarkerGlyph({ iconType }: { iconType: MapMarkerIconType }) {
-  return (
-    <svg
-      viewBox="0 0 18 18"
-      className="h-5 w-5"
-      dangerouslySetInnerHTML={{ __html: MAP_MARKER_SHAPE_SVG[iconType] }}
-    />
-  );
+  const { viewBox, inner } = MAP_MARKER_SHAPE_SVG[iconType];
+  return <svg viewBox={viewBox} className="h-5 w-5" dangerouslySetInnerHTML={{ __html: inner }} />;
 }
 
 function MarkerCreateDialog({
