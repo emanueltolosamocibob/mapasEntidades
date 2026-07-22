@@ -145,6 +145,14 @@ body {
 .map-mode-bright .leaflet-interactive {
   filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000);
 }
+/* El drop-shadow de arriba no alcanza contra fondos urbanos claros (techos
+   blancos, etc.) -- fondo sólido directo detrás del ícono de jugador/
+   marcador, mismo criterio que .tactical-marker-label más abajo. Sin
+   padding: cambiaría el tamaño de la caja y correría el iconAnchor
+   calculado para el tamaño original del SVG. */
+.map-mode-bright .tactical-marker-glyph {
+  background: rgba(0, 0, 0, 0.6);
+}
 /* El drop-shadow del ícono no alcanza para el texto del tag (nickname,
    tag de marcador, "hace X") -- se le suma un fondo sólido directo,
    igual que hace un HUD real, no solo contorno. */

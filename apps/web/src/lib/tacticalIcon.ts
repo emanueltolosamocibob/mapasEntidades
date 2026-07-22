@@ -224,7 +224,7 @@ export const MAP_MARKER_SHAPE_SVG: Record<MapMarkerIconType, { viewBox: string; 
 export function mapMarkerIcon(iconType: MapMarkerIconType, label: string | null) {
   const color = MAP_MARKER_COLORS[iconType];
   const { viewBox, inner } = MAP_MARKER_SHAPE_SVG[iconType];
-  const svg = `<svg width="18" height="18" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" style="color:${color}">${inner}</svg>`;
+  const svg = `<svg class="tactical-marker-glyph" width="18" height="18" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" style="color:${color}">${inner}</svg>`;
 
   if (isMovementMarker(iconType)) {
     return divIcon({
@@ -274,7 +274,7 @@ export function playerMarkerIcon(
       <div style="display:flex;flex-direction:column;align-items:center;width:100px;">
         <span class="tactical-marker-label" style="font-family:'JetBrains Mono Variable',ui-monospace,monospace;font-size:10px;letter-spacing:0.05em;color:${color};text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,0.85);margin-bottom:2px;">${label}</span>
         ${staleTag}
-        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">${shape}</svg>
+        <svg class="tactical-marker-glyph" width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">${shape}</svg>
       </div>
     `,
     className: "tactical-marker-icon",
