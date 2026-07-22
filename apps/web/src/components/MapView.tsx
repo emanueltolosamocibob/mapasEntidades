@@ -8,8 +8,8 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import { latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
-import { Minus, Mountain, Plus, Waypoints } from "lucide-react";
+import { DomEvent, latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
+import { Maximize, Minimize, Minus, Mountain, Plus, Waypoints } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
 import { playerMarkerIcon, distanceLabelIcon, ENEMY_COLOR } from "../lib/tacticalIcon";
@@ -153,6 +153,54 @@ function TopoToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => v
       }`}
     >
       <Mountain className="h-4 w-4" />
+    </button>
+  );
+}
+
+function FullscreenToggle({ onChange }: { onChange: (active: boolean) => void }) {
+  const map = useMap();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (buttonRef.current) DomEvent.disableClickPropagation(buttonRef.current);
+  }, []);
+
+  // Leaflet no re-mide los tiles solo porque el contenedor cambió de tamaño
+  // vía CSS (:fullscreen) — hay que forzar invalidateSize en la transición,
+  // y también sincronizar el ícono (y el label) si el usuario sale con Esc
+  // en vez de clickear el botón. El listener solo dispara en cambios reales,
+  // nunca en el mount, así que no hace falta filtrar la primera llamada.
+  useEffect(() => {
+    function handleFullscreenChange() {
+      const active = document.fullscreenElement === map.getContainer();
+      setIsFullscreen(active);
+      onChange(active);
+      setTimeout(() => map.invalidateSize(), 0);
+    }
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [map, onChange]);
+
+  function handleClick() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      map.getContainer().requestFullscreen();
+    }
+  }
+
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      onClick={handleClick}
+      aria-pressed={isFullscreen}
+      aria-label="Pantalla completa"
+      title="Pantalla completa"
+      className="absolute top-3 right-[144px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
+    >
+      {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
     </button>
   );
 }
@@ -413,6 +461,9 @@ function MapView({
       <TacticalZoomControl positions={positions} restriction={restriction} />
       <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
       <TopoToggle enabled={showTopo} onToggle={toggleTopo} />
+      <FullscreenToggle
+        onChange={(active) => showStatus(`Fullscreen: ${active ? "ON" : "OFF"}`)}
+      />
       <RecenterButton
         className="top-3 right-14 bottom-auto left-auto"
         onPress={() => showStatus("Centrando en mi posición...")}
