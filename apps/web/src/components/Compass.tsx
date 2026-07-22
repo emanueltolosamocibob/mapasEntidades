@@ -13,10 +13,26 @@ const CARDINALS: Record<number, string> = {
   315: "NO",
 };
 
+const TICK_STEP = 10;
+const RANGE_MIN = -180;
+const RANGE_MAX = 540;
+
 // Rango generoso (-180 a 540) para que siempre haya ticks cubriendo el ancho
 // visible de la tira sin importar el heading actual, evitando huecos al
-// acercarse a los bordes de 0°/360°.
-const TICKS = Array.from({ length: (540 - -180) / 15 + 1 }, (_, i) => -180 + i * 15);
+// acercarse a los bordes de 0°/360°. Los cardinales diagonales (45/135/225/315)
+// no son múltiplos de 10, así que se agregan aparte para no perderlos.
+function buildTicks(): number[] {
+  const angles = new Set<number>();
+  for (let angle = RANGE_MIN; angle <= RANGE_MAX; angle += TICK_STEP) angles.add(angle);
+  for (let base = -360; base <= 720; base += 360) {
+    for (const cardinalAngle of Object.keys(CARDINALS).map(Number)) {
+      const angle = base + cardinalAngle;
+      if (angle >= RANGE_MIN && angle <= RANGE_MAX) angles.add(angle);
+    }
+  }
+  return Array.from(angles).sort((a, b) => a - b);
+}
+const TICKS = buildTicks();
 
 type PermissionState = "idle" | "needs-gesture" | "granted" | "unavailable";
 
@@ -97,7 +113,7 @@ function Compass() {
       <button
         type="button"
         onClick={requestPermission}
-        className="absolute top-0 left-1/2 z-[1000] -translate-x-1/2 border border-primary bg-background/90 px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] text-primary hover:bg-primary/10"
+        className="absolute bottom-10 left-1/2 z-[1000] -translate-x-1/2 border border-primary bg-background/90 px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] text-primary hover:bg-primary/10"
       >
         ACTIVAR BRÚJULA
       </button>
@@ -109,7 +125,7 @@ function Compass() {
   const offset = (heading ?? 0) * PX_PER_DEGREE;
 
   return (
-    <div className="pointer-events-none absolute top-0 left-1/2 z-[1000] h-9 w-64 -translate-x-1/2 overflow-hidden border-x border-b border-primary bg-background/90 sm:w-96">
+    <div className="pointer-events-none absolute bottom-10 left-1/2 z-[1000] h-9 w-64 -translate-x-1/2 overflow-hidden border border-primary bg-background/90 sm:w-96">
       <div
         className="absolute top-0 left-1/2 h-full"
         style={{ transform: `translateX(calc(-50% - ${offset}px))` }}
@@ -134,6 +150,9 @@ function Compass() {
               ) : (
                 <span className="h-2 w-px bg-muted-foreground/50" />
               )}
+              <span className="text-[10px] tracking-[0.05em] text-muted-foreground">
+                {normalized}
+              </span>
             </div>
           );
         })}
