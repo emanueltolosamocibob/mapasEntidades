@@ -503,96 +503,98 @@ function MapView({
   }
 
   return (
-    <>
-      <MapContainer
-        center={initialCenter}
-        zoom={13}
-        maxZoom={MAX_ZOOM}
-        maxBoundsViscosity={1.0}
-        zoomControl={false}
-        style={{ height: "70vh", width: "100%" }}
-      >
-        {showTopo ? (
-          <TileLayer
-            key="topo"
-            className="map-tiles-topo-dark"
-            url={TOPO_URL}
-            maxZoom={MAX_ZOOM}
-            maxNativeZoom={TOPO_MAX_NATIVE_ZOOM}
-            attribution={TOPO_ATTRIBUTION}
-          />
-        ) : (
-          <TileLayer
-            key="dark"
-            className="map-tiles-hc"
-            url={CARTO_DARK_URL}
-            maxZoom={MAX_ZOOM}
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          />
-        )}
-        {restriction ? (
-          <>
-            <FitToRestriction restriction={restriction} />
-            <Circle
-              center={[restriction.lat, restriction.lng]}
-              radius={restriction.radiusM}
-              pathOptions={{ color: "#F5A623", weight: 2, fillOpacity: 0.05 }}
-            />
-          </>
-        ) : (
-          <FitToPositions positions={positions} />
-        )}
-        {showDistanceLines && <DistanceLines positions={positions} />}
-        {positions.map((position) => (
-          <Marker
-            key={position.entityId}
-            position={[position.lat, position.lng]}
-            icon={playerMarkerIcon(
-              position.nickname,
-              position.role,
-              isOutOfBounds(position, restriction),
-              markerColorFor(position, myTeamId, teamColors),
-              position.recordedAt
-            )}
-          />
-        ))}
-        {markers.map((marker) => (
-          <Marker
-            key={marker.id}
-            position={[marker.lat, marker.lng]}
-            icon={mapMarkerIcon(marker.iconType, marker.label)}
-            eventHandlers={
-              canEditMarkers ? { click: () => setMarkerPendingDelete(marker) } : undefined
-            }
-          />
-        ))}
-        {canEditMarkers && <MarkerLongPress onLongPress={setPendingMarkerPoint} />}
-        <Compass />
-        <TacticalZoomControl positions={positions} restriction={restriction} />
-        <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
-        <TopoToggle enabled={showTopo} onToggle={toggleTopo} />
-        <FullscreenToggle
-          onChange={(active) => showStatus(`Fullscreen: ${active ? "ON" : "OFF"}`)}
+    <MapContainer
+      center={initialCenter}
+      zoom={13}
+      maxZoom={MAX_ZOOM}
+      maxBoundsViscosity={1.0}
+      zoomControl={false}
+      style={{ height: "70vh", width: "100%" }}
+    >
+      {showTopo ? (
+        <TileLayer
+          key="topo"
+          className="map-tiles-topo-dark"
+          url={TOPO_URL}
+          maxZoom={MAX_ZOOM}
+          maxNativeZoom={TOPO_MAX_NATIVE_ZOOM}
+          attribution={TOPO_ATTRIBUTION}
         />
-        <RecenterButton
-          className="top-3 right-14 bottom-auto left-auto"
-          onPress={() => showStatus("Centrando en mi posición...")}
+      ) : (
+        <TileLayer
+          key="dark"
+          className="map-tiles-hc"
+          url={CARTO_DARK_URL}
+          maxZoom={MAX_ZOOM}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
-        {statusLabels.length > 0 && (
-          <div className="pointer-events-none absolute bottom-16 left-3 z-[1000] flex flex-col gap-1">
-            {statusLabels.map((item) => (
-              <div
-                key={item.id}
-                className={`text-xs font-bold tracking-[0.15em] text-white transition-opacity duration-300 ${
-                  item.fading ? "opacity-0" : "opacity-100"
-                }`}
-              >
-                {item.text}
-              </div>
-            ))}
-          </div>
-        )}
-      </MapContainer>
+      )}
+      {restriction ? (
+        <>
+          <FitToRestriction restriction={restriction} />
+          <Circle
+            center={[restriction.lat, restriction.lng]}
+            radius={restriction.radiusM}
+            pathOptions={{ color: "#F5A623", weight: 2, fillOpacity: 0.05 }}
+          />
+        </>
+      ) : (
+        <FitToPositions positions={positions} />
+      )}
+      {showDistanceLines && <DistanceLines positions={positions} />}
+      {positions.map((position) => (
+        <Marker
+          key={position.entityId}
+          position={[position.lat, position.lng]}
+          icon={playerMarkerIcon(
+            position.nickname,
+            position.role,
+            isOutOfBounds(position, restriction),
+            markerColorFor(position, myTeamId, teamColors),
+            position.recordedAt
+          )}
+        />
+      ))}
+      {markers.map((marker) => (
+        <Marker
+          key={marker.id}
+          position={[marker.lat, marker.lng]}
+          icon={mapMarkerIcon(marker.iconType, marker.label)}
+          eventHandlers={
+            canEditMarkers ? { click: () => setMarkerPendingDelete(marker) } : undefined
+          }
+        />
+      ))}
+      {canEditMarkers && <MarkerLongPress onLongPress={setPendingMarkerPoint} />}
+      <Compass />
+      <TacticalZoomControl positions={positions} restriction={restriction} />
+      <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
+      <TopoToggle enabled={showTopo} onToggle={toggleTopo} />
+      <FullscreenToggle
+        onChange={(active) => showStatus(`Fullscreen: ${active ? "ON" : "OFF"}`)}
+      />
+      <RecenterButton
+        className="top-3 right-14 bottom-auto left-auto"
+        onPress={() => showStatus("Centrando en mi posición...")}
+      />
+      {statusLabels.length > 0 && (
+        <div className="pointer-events-none absolute bottom-16 left-3 z-[1000] flex flex-col gap-1">
+          {statusLabels.map((item) => (
+            <div
+              key={item.id}
+              className={`text-xs font-bold tracking-[0.15em] text-white transition-opacity duration-300 ${
+                item.fading ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {item.text}
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Adentro del MapContainer a propósito: el navegador oculta todo lo
+          que no sea descendiente del elemento en fullscreen (ver
+          FullscreenToggle) -- si estos diálogos quedan afuera, no se ven
+          mientras el mapa está en pantalla completa (MAP-57). */}
       <MarkerCreateDialog
         open={pendingMarkerPoint !== null}
         onCancel={() => setPendingMarkerPoint(null)}
@@ -609,7 +611,7 @@ function MapView({
         onConfirm={handleConfirmDeleteMarker}
         onCancel={() => setMarkerPendingDelete(null)}
       />
-    </>
+    </MapContainer>
   );
 }
 

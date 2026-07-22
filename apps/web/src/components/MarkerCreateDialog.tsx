@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import {
+  MAP_MARKER_COLORS,
   MAP_MARKER_LABELS,
   MAP_MARKER_SHAPE_SVG,
   isMovementMarker,
@@ -29,12 +30,20 @@ const MOVEMENT_TYPES: MapMarkerIconType[] = [
   "arrow_up_left",
 ];
 
-// Misma forma (MAP_MARKER_SHAPE_SVG) que dibuja mapMarkerIcon() para
-// Leaflet -- una sola fuente de verdad, el botón se ve idéntico al
-// marcador que termina puesto en el mapa.
+// Misma forma y color (MAP_MARKER_SHAPE_SVG / MAP_MARKER_COLORS) que dibuja
+// mapMarkerIcon() para Leaflet -- una sola fuente de verdad, el botón se ve
+// idéntico al marcador que termina puesto en el mapa (color real, no gris,
+// para que se vea "tal cual se pondría" antes de confirmar).
 function MarkerGlyph({ iconType }: { iconType: MapMarkerIconType }) {
   const { viewBox, inner } = MAP_MARKER_SHAPE_SVG[iconType];
-  return <svg viewBox={viewBox} className="h-5 w-5" dangerouslySetInnerHTML={{ __html: inner }} />;
+  return (
+    <svg
+      viewBox={viewBox}
+      className="h-5 w-5"
+      style={{ color: MAP_MARKER_COLORS[iconType] }}
+      dangerouslySetInnerHTML={{ __html: inner }}
+    />
+  );
 }
 
 function MarkerCreateDialog({
@@ -67,11 +76,11 @@ function MarkerCreateDialog({
     setLabel("");
   }
 
-  function iconButtonClass(type: MapMarkerIconType) {
-    return `flex h-12 w-full items-center justify-center border ${
-      selectedType === type
-        ? "border-primary bg-primary/20 text-primary"
-        : "border-border text-muted-foreground hover:bg-primary/10"
+  // El color del ícono ya viene fijo por tipo (MarkerGlyph) -- acá solo se
+  // marca la selección con el borde/fondo, no se apaga el color real.
+  function iconButtonClass(type: MapMarkerIconType, { withLabel }: { withLabel: boolean }) {
+    return `flex ${withLabel ? "h-16 flex-col gap-1 py-1.5" : "h-12"} w-full items-center justify-center border ${
+      selectedType === type ? "border-primary bg-primary/20" : "border-border hover:bg-primary/10"
     }`;
   }
 
@@ -96,9 +105,15 @@ function MarkerCreateDialog({
               onClick={() => setSelectedType(type)}
               aria-pressed={selectedType === type}
               title={MAP_MARKER_LABELS[type]}
-              className={iconButtonClass(type)}
+              className={iconButtonClass(type, { withLabel: true })}
             >
               <MarkerGlyph iconType={type} />
+              <span
+                className="w-full truncate px-0.5 text-center text-[8px] tracking-[0.05em] uppercase"
+                style={{ color: MAP_MARKER_COLORS[type] }}
+              >
+                {MAP_MARKER_LABELS[type]}
+              </span>
             </button>
           ))}
         </div>
@@ -114,7 +129,7 @@ function MarkerCreateDialog({
               onClick={() => setSelectedType(type)}
               aria-pressed={selectedType === type}
               title={MAP_MARKER_LABELS[type]}
-              className={iconButtonClass(type)}
+              className={iconButtonClass(type, { withLabel: false })}
             >
               <MarkerGlyph iconType={type} />
             </button>
