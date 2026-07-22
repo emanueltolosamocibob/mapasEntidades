@@ -134,6 +134,18 @@ body {
   height: 100vh !important;
 }
 
+/* Modo topográfico/satelital (MapView.tsx, className condicional en
+   MapContainer): fondos "ruidosos" con muchos colores propios, a
+   diferencia del dark liso de CARTO -- jugadores, marcadores y líneas de
+   distancia se pierden sin un contorno oscuro marcado. drop-shadow (no
+   box-shadow) porque son íconos/paths, no cajas rectangulares. */
+.map-mode-bright .tactical-marker-icon {
+  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000);
+}
+.map-mode-bright .leaflet-interactive {
+  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000);
+}
+
 /* Leaflet le pone fondo/borde blanco a los divIcon por defecto */
 .tactical-marker-icon {
   background: transparent !important;

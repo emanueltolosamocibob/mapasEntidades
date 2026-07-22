@@ -9,7 +9,16 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import { DomEvent, latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
-import { Maximize, Minimize, Minus, Mountain, Plus, Satellite, Waypoints } from "lucide-react";
+import {
+  Map as MapIcon,
+  Maximize,
+  Minimize,
+  Minus,
+  Mountain,
+  Plus,
+  Satellite,
+  Waypoints,
+} from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
 import Compass from "./Compass";
@@ -161,36 +170,31 @@ function DistanceLinesToggle({
   );
 }
 
-function TopoToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={enabled}
-      aria-label="Mapa topográfico"
-      title="Mapa topográfico"
-      className={`absolute top-3 right-[100px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
-        enabled ? "bg-primary/20" : ""
-      }`}
-    >
-      <Mountain className="h-4 w-4" />
-    </button>
-  );
-}
+const MAP_MODE_ICON = { dark: MapIcon, topo: Mountain, satellite: Satellite } as const;
+const MAP_MODE_LABEL = { dark: "NORMAL", topo: "TOPOGRÁFICO", satellite: "SATELITAL" } as const;
 
-function SatelliteToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+// Un solo botón cicla los 3 modos (dark → topo → satelital → dark) en vez
+// de un toggle por modo -- el ícono y el label de estado (NORMAL/
+// TOPOGRÁFICO/SATELITAL) reflejan el modo actual.
+function MapModeToggle({
+  mode,
+  onToggle,
+}: {
+  mode: "dark" | "topo" | "satellite";
+  onToggle: () => void;
+}) {
+  const Icon = MAP_MODE_ICON[mode];
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-pressed={enabled}
-      aria-label="Vista satelital"
-      title="Vista satelital"
-      className={`absolute top-3 right-[188px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
-        enabled ? "bg-primary/20" : ""
+      aria-label="Cambiar vista del mapa"
+      title="Cambiar vista del mapa"
+      className={`absolute top-3 right-[100px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+        mode !== "dark" ? "bg-primary/20" : ""
       }`}
     >
-      <Satellite className="h-4 w-4" />
+      <Icon className="h-4 w-4" />
     </button>
   );
 }
@@ -522,18 +526,10 @@ function MapView({
     showStatus(`Mostrar distancias: ${next ? "ON" : "OFF"}`);
   }
 
-  // Los 3 modos son mutuamente excluyentes -- tocar el mismo toggle activo
-  // vuelve al modo dark (CARTO), igual que el toggle simple que reemplazan.
-  function toggleTopo() {
-    const next = mapMode === "topo" ? "dark" : "topo";
+  function cycleMapMode() {
+    const next = mapMode === "dark" ? "topo" : mapMode === "topo" ? "satellite" : "dark";
     setMapMode(next);
-    showStatus(`Vista topográfica: ${next === "topo" ? "ON" : "OFF"}`);
-  }
-
-  function toggleSatellite() {
-    const next = mapMode === "satellite" ? "dark" : "satellite";
-    setMapMode(next);
-    showStatus(`Vista satelital: ${next === "satellite" ? "ON" : "OFF"}`);
+    showStatus(`Vista: ${MAP_MODE_LABEL[next]}`);
   }
 
   return (
@@ -544,6 +540,10 @@ function MapView({
       maxBoundsViscosity={1.0}
       zoomControl={false}
       style={{ height: "70vh", width: "100%" }}
+      // Topo/satelital son fondos "ruidosos" (imagen real, muchos colores) --
+      // sin esto, jugadores/marcadores/líneas se pierden contra el fondo.
+      // Ver .map-mode-bright en index.css.
+      className={mapMode !== "dark" ? "map-mode-bright" : undefined}
     >
       {mapMode === "topo" ? (
         <TileLayer
@@ -611,8 +611,7 @@ function MapView({
       <Compass />
       <TacticalZoomControl positions={positions} restriction={restriction} />
       <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
-      <TopoToggle enabled={mapMode === "topo"} onToggle={toggleTopo} />
-      <SatelliteToggle enabled={mapMode === "satellite"} onToggle={toggleSatellite} />
+      <MapModeToggle mode={mapMode} onToggle={cycleMapMode} />
       <FullscreenToggle
         onChange={(active) => showStatus(`Fullscreen: ${active ? "ON" : "OFF"}`)}
       />
