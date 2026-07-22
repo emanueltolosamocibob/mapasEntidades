@@ -97,7 +97,7 @@ function Compass() {
       <button
         type="button"
         onClick={requestPermission}
-        className="absolute top-0 left-1/2 z-[1000] -translate-x-1/2 border border-primary bg-background/90 px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] text-primary hover:bg-primary/10"
+        className="absolute bottom-10 left-1/2 z-[1000] -translate-x-1/2 border border-primary bg-background/90 px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] text-primary hover:bg-primary/10"
       >
         ACTIVAR BRÚJULA
       </button>
@@ -109,7 +109,7 @@ function Compass() {
   const offset = (heading ?? 0) * PX_PER_DEGREE;
 
   return (
-    <div className="pointer-events-none absolute top-0 left-1/2 z-[1000] h-9 w-64 -translate-x-1/2 overflow-hidden border-x border-b border-primary bg-background/90 sm:w-96">
+    <div className="pointer-events-none absolute bottom-10 left-1/2 z-[1000] h-9 w-64 -translate-x-1/2 overflow-hidden border border-primary bg-background/90 sm:w-96">
       <div
         className="absolute top-0 left-1/2 h-full"
         style={{ transform: `translateX(calc(-50% - ${offset}px))` }}
