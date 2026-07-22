@@ -366,12 +366,20 @@ function TacticalZoomControl({
 }) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
+  const [center, setCenter] = useState(map.getCenter());
 
   useEffect(() => setZoom(map.getZoom()), [positions, restriction, map]);
 
-  // Zoom manual (botones +/- de acá abajo) dispara 'zoomend' normal.
+  // moveend/zoomend (no move/zoom) a propósito -- disparan una sola vez
+  // cuando el pan/zoom termina, no en cada frame intermedio del gesto.
+  // Con move/zoom el label de lat/lng recalcularía y re-renderizaría
+  // decenas de veces por segundo mientras se arrastra el mapa.
   useMapEvents({
-    zoomend: () => setZoom(map.getZoom()),
+    zoomend: () => {
+      setZoom(map.getZoom());
+      setCenter(map.getCenter());
+    },
+    moveend: () => setCenter(map.getCenter()),
   });
 
   const fitRef = getFitReference(positions, restriction);
@@ -386,28 +394,47 @@ function TacticalZoomControl({
   const atMax = zoom >= maxZoom;
 
   return (
-    <div className="absolute top-3 left-3 z-[1000] flex items-center border border-primary bg-background/90 text-primary">
-      <button
-        type="button"
-        onClick={() => map.zoomOut()}
-        disabled={atMin}
-        aria-label="Alejar zoom"
-        className="flex h-9 w-9 items-center justify-center hover:bg-primary/10 disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-transparent"
-      >
-        <Minus className="h-4 w-4" />
-      </button>
-      <span className="border-x border-primary px-2 text-xs tracking-[0.15em] whitespace-nowrap">
-        Zoom {percent}%
+    <div className="absolute top-3 left-3 z-[1000] flex flex-col border border-primary bg-background/90 text-primary">
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => map.zoomOut()}
+          disabled={atMin}
+          aria-label="Alejar zoom"
+          className="flex h-9 w-9 items-center justify-center hover:bg-primary/10 disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-transparent"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        <span className="border-x border-primary px-2 text-xs tracking-[0.15em] whitespace-nowrap">
+          Zoom {percent}%
+        </span>
+        <button
+          type="button"
+          onClick={() => map.zoomIn()}
+          disabled={atMax}
+          aria-label="Acercar zoom"
+          className="flex h-9 w-9 items-center justify-center hover:bg-primary/10 disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-transparent"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+      <span className="border-t border-primary px-2 py-1 text-center text-[10px] tracking-[0.1em] whitespace-nowrap">
+        {center.lat.toFixed(5)}, {center.lng.toFixed(5)}
       </span>
-      <button
-        type="button"
-        onClick={() => map.zoomIn()}
-        disabled={atMax}
-        aria-label="Acercar zoom"
-        className="flex h-9 w-9 items-center justify-center hover:bg-primary/10 disabled:text-muted-foreground disabled:opacity-60 disabled:hover:bg-transparent"
-      >
-        <Plus className="h-4 w-4" />
-      </button>
+    </div>
+  );
+}
+
+// Retículo del centro del mapa: dos líneas finas + un cuadrado sin relleno
+// donde se cruzan. Fijo al centro del viewport del mapa (no a una
+// coordenada geográfica) -- por eso es puro CSS estático, sin listeners ni
+// estado, no se recalcula en cada pan/zoom.
+function CenterReticle() {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[900]">
+      <div className="absolute top-1/2 right-0 left-0 h-px -translate-y-1/2 bg-primary/50" />
+      <div className="absolute top-0 bottom-0 left-1/2 w-px -translate-x-1/2 bg-primary/50" />
+      <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 border border-primary" />
     </div>
   );
 }
@@ -619,6 +646,7 @@ function MapView({
       ))}
       {canEditMarkers && <MarkerLongPress onLongPress={setPendingMarkerPoint} />}
       <MapModeClassSync mode={mapMode} />
+      <CenterReticle />
       <Compass />
       <TacticalZoomControl positions={positions} restriction={restriction} />
       <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
