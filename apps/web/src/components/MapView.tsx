@@ -10,6 +10,7 @@ import {
 } from "react-leaflet";
 import { DomEvent, latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
 import {
+  Footprints,
   Map as MapIcon,
   Maximize,
   Minimize,
@@ -34,6 +35,7 @@ import {
 } from "../lib/tacticalIcon";
 import { useMapMarkers, type MapMarker } from "../hooks/useMapMarkers";
 import { useMapMarkerActions } from "../hooks/useMapMarkerActions";
+import { usePositionTrails, type PositionTrail } from "../hooks/usePositionTrails";
 
 type PlayerPosition = {
   entityId: string;
@@ -147,6 +149,55 @@ function DistanceLines({ positions }: { positions: PlayerPosition[] }) {
   );
 }
 
+// Rastro reciente por jugador (MAP-57) -- una polyline fina por entidad,
+// color de equipo (mismo criterio que colorForTeam usa para los
+// marcadores), no interactiva.
+function PositionTrails({
+  trails,
+  myTeamId,
+  teamColors,
+}: {
+  trails: PositionTrail[];
+  myTeamId: string | null | undefined;
+  teamColors: Record<string, string> | undefined;
+}) {
+  return (
+    <>
+      {trails.map((trail) =>
+        trail.points.length < 2 ? null : (
+          <Polyline
+            key={trail.entityId}
+            positions={trail.points.map((p) => [p.lat, p.lng])}
+            interactive={false}
+            pathOptions={{
+              color: colorForTeam(trail.teamId, myTeamId, teamColors) ?? "#F5A623",
+              weight: 2,
+              opacity: 0.5,
+            }}
+          />
+        )
+      )}
+    </>
+  );
+}
+
+function TrailToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={enabled}
+      aria-label="Mostrar rastro de jugadores"
+      title="Mostrar rastro de jugadores"
+      className={`absolute top-3 right-14 z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+        enabled ? "bg-primary/20" : ""
+      }`}
+    >
+      <Footprints className="h-4 w-4" />
+    </button>
+  );
+}
+
 function DistanceLinesToggle({
   enabled,
   onToggle,
@@ -235,7 +286,7 @@ function FullscreenToggle({
       aria-pressed={isFullscreen}
       aria-label="Pantalla completa"
       title="Pantalla completa"
-      className="absolute top-3 right-[144px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
+      className="absolute top-3 right-[188px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
     >
       {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
     </button>
@@ -441,15 +492,15 @@ function CenterReticle() {
   );
 }
 
-function markerColorFor(
-  position: PlayerPosition,
+function colorForTeam(
+  teamId: string | null | undefined,
   myTeamId: string | null | undefined,
   teamColors: Record<string, string> | undefined
 ): string | undefined {
-  if (teamColors && position.teamId && teamColors[position.teamId]) {
-    return teamColors[position.teamId];
+  if (teamColors && teamId && teamColors[teamId]) {
+    return teamColors[teamId];
   }
-  if (myTeamId != null && position.teamId != null && position.teamId !== myTeamId) {
+  if (myTeamId != null && teamId != null && teamId !== myTeamId) {
     return ENEMY_COLOR;
   }
   return undefined;
@@ -486,6 +537,8 @@ function MapView({
     ? [restriction.lat, restriction.lng]
     : DEFAULT_CENTER;
   const [showDistanceLines, setShowDistanceLines] = useState(false);
+  const [showTrails, setShowTrails] = useState(false);
+  const { trails } = usePositionTrails(sessionId, showTrails);
   const [mapMode, setMapMode] = useState<"dark" | "topo" | "satellite">("dark");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [statusLabels, setStatusLabels] = useState<{ id: number; text: string; fading: boolean }[]>(
@@ -570,6 +623,12 @@ function MapView({
     showStatus(`Mostrar distancias: ${next ? "ON" : "OFF"}`);
   }
 
+  function toggleTrails() {
+    const next = !showTrails;
+    setShowTrails(next);
+    showStatus(`Rastro de jugadores: ${next ? "ON" : "OFF"}`);
+  }
+
   function cycleMapMode() {
     const next = mapMode === "dark" ? "topo" : mapMode === "topo" ? "satellite" : "dark";
     setMapMode(next);
@@ -641,6 +700,9 @@ function MapView({
         <FitToPositions positions={positions} />
       )}
       {showDistanceLines && <DistanceLines positions={positions} />}
+      {showTrails && (
+        <PositionTrails trails={trails} myTeamId={myTeamId} teamColors={teamColors} />
+      )}
       {positions.map((position) => (
         <Marker
           key={position.entityId}
@@ -649,7 +711,7 @@ function MapView({
             position.nickname,
             position.role,
             isOutOfBounds(position, restriction),
-            markerColorFor(position, myTeamId, teamColors),
+            colorForTeam(position.teamId, myTeamId, teamColors),
             position.recordedAt
           )}
         />
@@ -674,10 +736,11 @@ function MapView({
       {isFullscreen && <Compass variant="overlay" />}
       <TacticalZoomControl positions={positions} restriction={restriction} />
       <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
+      <TrailToggle enabled={showTrails} onToggle={toggleTrails} />
       <MapModeToggle mode={mapMode} onToggle={cycleMapMode} />
       <FullscreenToggle isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
       <RecenterButton
-        className="top-3 right-14 bottom-auto left-auto"
+        className="top-3 right-[144px] bottom-auto left-auto"
         onPress={() => showStatus("Centrando en mi posición...")}
       />
       {statusLabels.length > 0 && (
