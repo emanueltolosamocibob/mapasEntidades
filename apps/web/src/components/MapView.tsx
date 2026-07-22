@@ -9,7 +9,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import { DomEvent, latLng, latLngBounds, point, type LatLngBounds } from "leaflet";
-import { Maximize, Minimize, Minus, Mountain, Plus, Waypoints } from "lucide-react";
+import { Maximize, Minimize, Minus, Mountain, Plus, Satellite, Waypoints } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import RecenterButton from "./RecenterButton";
 import Compass from "./Compass";
@@ -47,6 +47,15 @@ const TOPO_ATTRIBUTION =
 // OpenTopoMap no tiene tiles nativos más allá de este zoom — Leaflet
 // sobre-escala los últimos automáticamente, se ve borroso pero funciona.
 const TOPO_MAX_NATIVE_ZOOM = 17;
+
+// Esri World Imagery: satelital/aéreo, gratis, sin API key. Nota el orden
+// {z}/{y}/{x} (no {z}/{x}/{y} como el resto) -- así lo pide el esquema de
+// tiles de ArcGIS.
+const SATELLITE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const SATELLITE_ATTRIBUTION =
+  "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community";
+const SATELLITE_MAX_NATIVE_ZOOM = 19;
 
 const DEFAULT_CENTER: [number, number] = [-34.6037, -58.3816];
 const MAX_ZOOM = 20;
@@ -165,6 +174,23 @@ function TopoToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => v
       }`}
     >
       <Mountain className="h-4 w-4" />
+    </button>
+  );
+}
+
+function SatelliteToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={enabled}
+      aria-label="Vista satelital"
+      title="Vista satelital"
+      className={`absolute top-3 right-[188px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+        enabled ? "bg-primary/20" : ""
+      }`}
+    >
+      <Satellite className="h-4 w-4" />
     </button>
   );
 }
@@ -413,7 +439,7 @@ function MapView({
     ? [restriction.lat, restriction.lng]
     : DEFAULT_CENTER;
   const [showDistanceLines, setShowDistanceLines] = useState(false);
-  const [showTopo, setShowTopo] = useState(false);
+  const [mapMode, setMapMode] = useState<"dark" | "topo" | "satellite">("dark");
   const [statusLabels, setStatusLabels] = useState<{ id: number; text: string; fading: boolean }[]>(
     []
   );
@@ -496,10 +522,18 @@ function MapView({
     showStatus(`Mostrar distancias: ${next ? "ON" : "OFF"}`);
   }
 
+  // Los 3 modos son mutuamente excluyentes -- tocar el mismo toggle activo
+  // vuelve al modo dark (CARTO), igual que el toggle simple que reemplazan.
   function toggleTopo() {
-    const next = !showTopo;
-    setShowTopo(next);
-    showStatus(`Vista topográfica: ${next ? "ON" : "OFF"}`);
+    const next = mapMode === "topo" ? "dark" : "topo";
+    setMapMode(next);
+    showStatus(`Vista topográfica: ${next === "topo" ? "ON" : "OFF"}`);
+  }
+
+  function toggleSatellite() {
+    const next = mapMode === "satellite" ? "dark" : "satellite";
+    setMapMode(next);
+    showStatus(`Vista satelital: ${next === "satellite" ? "ON" : "OFF"}`);
   }
 
   return (
@@ -511,7 +545,7 @@ function MapView({
       zoomControl={false}
       style={{ height: "70vh", width: "100%" }}
     >
-      {showTopo ? (
+      {mapMode === "topo" ? (
         <TileLayer
           key="topo"
           className="map-tiles-topo-dark"
@@ -519,6 +553,14 @@ function MapView({
           maxZoom={MAX_ZOOM}
           maxNativeZoom={TOPO_MAX_NATIVE_ZOOM}
           attribution={TOPO_ATTRIBUTION}
+        />
+      ) : mapMode === "satellite" ? (
+        <TileLayer
+          key="satellite"
+          url={SATELLITE_URL}
+          maxZoom={MAX_ZOOM}
+          maxNativeZoom={SATELLITE_MAX_NATIVE_ZOOM}
+          attribution={SATELLITE_ATTRIBUTION}
         />
       ) : (
         <TileLayer
@@ -569,7 +611,8 @@ function MapView({
       <Compass />
       <TacticalZoomControl positions={positions} restriction={restriction} />
       <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
-      <TopoToggle enabled={showTopo} onToggle={toggleTopo} />
+      <TopoToggle enabled={mapMode === "topo"} onToggle={toggleTopo} />
+      <SatelliteToggle enabled={mapMode === "satellite"} onToggle={toggleSatellite} />
       <FullscreenToggle
         onChange={(active) => showStatus(`Fullscreen: ${active ? "ON" : "OFF"}`)}
       />
