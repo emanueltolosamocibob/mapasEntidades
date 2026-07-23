@@ -5,6 +5,7 @@ import { useSessionByCode } from "../hooks/useSessionByCode";
 import { useAirsoftTeams } from "../hooks/useAirsoftTeams";
 import { useParticipants } from "../hooks/useParticipants";
 import { useCloseSession } from "../hooks/useCloseSession";
+import { useStartSession } from "../hooks/useStartSession";
 import { useMyParticipant } from "../hooks/useMyParticipant";
 import { usePositions } from "../hooks/usePositions";
 import { isSessionClosed } from "../lib/sessionStatus";
@@ -38,6 +39,8 @@ function HostPanelPage() {
   const { participants } = useParticipants(sessionId);
   const { closeSession, loading: closing, error: closeError } = useCloseSession();
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  const { startSession, loading: starting, error: startError } = useStartSession();
+  const [confirmStartOpen, setConfirmStartOpen] = useState(false);
   const userId = session.status === "ready" ? session.user.id : undefined;
   const myParticipant = useMyParticipant(sessionId, userId);
   const { positions } = usePositions(sessionId);
@@ -98,6 +101,14 @@ function HostPanelPage() {
     if (success) navigate(`/session/${code}/summary`);
   }
 
+  // Sin navegación explícita: useSessionByCode ya está suscripto a UPDATE
+  // en sessions (filtrado por code), así que started_at llega solo y la
+  // página se re-renderiza sola (el panel de Fotos desaparece, etc.).
+  async function confirmStartSession() {
+    setConfirmStartOpen(false);
+    await startSession(currentSessionId);
+  }
+
   return (
     <main className="tactical-grid min-h-svh bg-background px-4 py-10 text-foreground sm:px-8">
       <ConfirmDialog
@@ -108,9 +119,25 @@ function HostPanelPage() {
         onConfirm={confirmCloseSession}
         onCancel={() => setConfirmCloseOpen(false)}
       />
+      <ConfirmDialog
+        open={confirmStartOpen}
+        title="Iniciar partida"
+        message="¿Iniciar la partida ahora? A partir de este momento arranca el tracking en vivo y el evento deja de listarse públicamente para nuevas inscripciones."
+        confirmLabel="Iniciar partida"
+        onConfirm={confirmStartSession}
+        onCancel={() => setConfirmStartOpen(false)}
+      />
       <div className="mx-auto max-w-3xl">
         <header className="mb-8 flex items-start justify-between gap-6 border-b border-border pb-6">
           <div className="min-w-0 flex-1">
+            {isUnstartedEvent && (
+              <Link
+                to="/eventos"
+                className="mb-1 inline-block text-xs tracking-[0.2em] text-muted-foreground uppercase hover:text-primary"
+              >
+                ← Volver
+              </Link>
+            )}
             <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">
               Panel de anfitrión
             </p>
@@ -119,21 +146,33 @@ function HostPanelPage() {
               <span className="text-primary">({code})</span>
             </h1>
 
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               {isClosed ? (
                 <p className="text-sm text-muted-foreground">Esta partida está cerrada.</p>
               ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={closing}
-                  onClick={() => setConfirmCloseOpen(true)}
-                >
-                  {closing ? "Cerrando..." : "Cerrar partida"}
-                </Button>
+                <>
+                  {isUnstartedEvent && (
+                    <Button
+                      type="button"
+                      disabled={starting}
+                      onClick={() => setConfirmStartOpen(true)}
+                    >
+                      {starting ? "Iniciando..." : "Iniciar partida"}
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={closing}
+                    onClick={() => setConfirmCloseOpen(true)}
+                  >
+                    {closing ? "Cerrando..." : "Cerrar partida"}
+                  </Button>
+                </>
               )}
-              {closeError && <p className="mt-2 text-sm text-destructive">{closeError}</p>}
             </div>
+            {startError && <p className="mt-2 text-sm text-destructive">{startError}</p>}
+            {closeError && <p className="mt-2 text-sm text-destructive">{closeError}</p>}
 
             {!isClosed && userId && myParticipant?.status === "accepted" && (
               <div className="mt-4">
