@@ -1,6 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router";
+import { X } from "lucide-react";
 import { useCreateSession } from "../hooks/useCreateSession";
+import { useSessionPhotoActions } from "../hooks/useSessionPhotoActions";
 import { usePresetFields } from "../hooks/usePresetFields";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
@@ -8,7 +10,6 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import OriginPicker from "./OriginPicker";
 import SessionCodeQr from "./SessionCodeQr";
-import SessionPhotosPanel from "./SessionPhotosPanel";
 
 type Point = { lat: number; lng: number };
 type MovementMode = "free" | "restricted";
@@ -17,6 +18,7 @@ type TeamDraft = { name: string; maxPlayers: string };
 const MAX_TEAMS = 10;
 const RADIUS_MIN = 100;
 const RADIUS_MAX = 10000;
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
 
 const textareaClassName =
   "min-h-24 w-full border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring";
@@ -77,6 +79,48 @@ function PublishEventForm() {
   const [selectedFieldId, setSelectedFieldId] = useState("");
   const [focusSignal, setFocusSignal] = useState(0);
 
+  // Las fotos se eligen en el formulario pero se suben recién después de
+  // crear la sesión (mismo submit): la policy de Storage exige que la
+  // sesión exista y que quien sube sea su host, así que no hay forma de
+  // subirlas antes de apretar "Publicar evento".
+  const { uploadPhoto } = useSessionPhotoActions();
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [photosError, setPhotosError] = useState<string | null>(null);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const documentsInputRef = useRef<HTMLInputElement>(null);
+
+  function validatePhoto(file: File): string | null {
+    if (!file.type.startsWith("image/")) return "Solo se pueden subir imágenes.";
+    if (file.size > MAX_PHOTO_SIZE_BYTES) return "La imagen no puede pesar más de 5MB.";
+    return null;
+  }
+
+  function handleCoverChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const error = validatePhoto(file);
+    setPhotosError(error);
+    if (!error) setCoverFile(file);
+  }
+
+  function handleDocumentsChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0) return;
+    for (const file of files) {
+      const error = validatePhoto(file);
+      if (error) {
+        setPhotosError(error);
+        return;
+      }
+    }
+    setPhotosError(null);
+    setDocumentFiles((prev) => [...prev, ...files]);
+  }
+
   function updateTeamName(index: number, value: string) {
     setTeams((prev) => prev.map((team, i) => (i === index ? { ...team, name: value } : team)));
   }
@@ -106,7 +150,7 @@ function PublishEventForm() {
     }
   }
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setValidationError(null);
     setNameError(null);
@@ -138,6 +182,7 @@ function PublishEventForm() {
       maxPlayers: team.maxPlayers ? Number(team.maxPlayers) : null,
     }));
 
+    let movementRadiusM: number | null = null;
     if (movementMode === "restricted") {
       const radius = Number(radiusMeters);
       if (!origin) {
@@ -148,25 +193,29 @@ function PublishEventForm() {
         setValidationError(`El radio tiene que estar entre ${RADIUS_MIN} y ${RADIUS_MAX} metros.`);
         return;
       }
-      createSession({
-        name: name.trim(),
-        teams: teamsForSubmit,
-        origin,
-        movementRadiusM: radius,
-        description: description.trim() || null,
-        startNow: false,
-      });
-      return;
+      movementRadiusM = radius;
     }
 
-    createSession({
+    const session = await createSession({
       name: name.trim(),
       teams: teamsForSubmit,
       origin,
-      movementRadiusM: null,
+      movementRadiusM,
       description: description.trim() || null,
       startNow: false,
     });
+    if (!session) return;
+
+    // La vista ya cambió a la de éxito (createSession seteó el estado) --
+    // las fotos elegidas se suben en segundo plano con su propio indicador.
+    if (coverFile || documentFiles.length > 0) {
+      setUploadingPhotos(true);
+      if (coverFile) await uploadPhoto(session.id, coverFile, "cover");
+      for (const file of documentFiles) {
+        await uploadPhoto(session.id, file, "document");
+      }
+      setUploadingPhotos(false);
+    }
   }
 
   if (state.status === "success") {
@@ -178,12 +227,11 @@ function PublishEventForm() {
         <p className="text-3xl font-bold tracking-[0.15em] text-primary">{state.session.code}</p>
         <SessionCodeQr code={state.session.code} />
 
-        <div className="border-t border-border pt-4">
-          <p className="mb-3 text-xs tracking-[0.2em] text-muted-foreground uppercase">
-            Fotos del evento
+        {uploadingPhotos && (
+          <p className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
+            Subiendo fotos...
           </p>
-          <SessionPhotosPanel sessionId={state.session.id} />
-        </div>
+        )}
 
         <Link
           to={`/session/${state.session.code}/host`}
@@ -219,6 +267,89 @@ function PublishEventForm() {
           placeholder="Contales a los jugadores de qué se trata el evento..."
           className={textareaClassName}
         />
+      </div>
+
+      <div>
+        <SectionLabel>Fotos</SectionLabel>
+        <div className="space-y-4">
+          <div>
+            <p className="mb-2 text-xs tracking-[0.15em] text-muted-foreground uppercase">
+              Portada
+            </p>
+            {coverFile ? (
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-sm">{coverFile.name}</span>
+                <button
+                  type="button"
+                  onClick={() => setCoverFile(null)}
+                  aria-label="Quitar portada"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center border border-destructive text-destructive hover:bg-destructive/10"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => coverInputRef.current?.click()}
+              >
+                Elegir portada
+              </Button>
+            )}
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleCoverChange}
+            />
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs tracking-[0.15em] text-muted-foreground uppercase">
+              Documentos
+            </p>
+            {documentFiles.length > 0 && (
+              <ul className="mb-2 space-y-1">
+                {documentFiles.map((file, index) => (
+                  <li key={`${file.name}-${index}`} className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-sm">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDocumentFiles((prev) => prev.filter((_, i) => i !== index))
+                      }
+                      aria-label={`Quitar ${file.name}`}
+                      className="flex h-6 w-6 shrink-0 items-center justify-center border border-destructive text-destructive hover:bg-destructive/10"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => documentsInputRef.current?.click()}
+            >
+              + Agregar documento
+            </Button>
+            <input
+              ref={documentsInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleDocumentsChange}
+            />
+          </div>
+
+          {photosError && <p className="text-xs text-destructive">{photosError}</p>}
+        </div>
       </div>
 
       <div>
