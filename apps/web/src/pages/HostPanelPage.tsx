@@ -17,6 +17,7 @@ import TacticalPanel from "../components/TacticalPanel";
 import ConfirmDialog from "../components/ConfirmDialog";
 import HostJoinForm from "../components/HostJoinForm";
 import MapView from "../components/MapView";
+import SessionPhotosPanel from "../components/SessionPhotosPanel";
 
 function CenteredMessage({ children }: { children: ReactNode }) {
   return (
@@ -70,6 +71,10 @@ function HostPanelPage() {
   const acceptedParticipants = participants.filter((p) => p.status === "accepted");
   const isClosed = isSessionClosed(sessionByCode.session);
   const currentSessionId = sessionByCode.session.id;
+  // Evento publicado, todavía sin arrancar (Fase 7) -- partida rápida
+  // siempre tiene started_at seteado desde que se crea, así que este panel
+  // nunca aparece ahí.
+  const isUnstartedEvent = sessionByCode.session.started_at === null;
 
   const positionsWithTeam = positions.map((position) => ({
     ...position,
@@ -165,6 +170,12 @@ function HostPanelPage() {
         </header>
 
         <div className="space-y-6">
+          {isUnstartedEvent && (
+            <TacticalPanel title="Fotos">
+              <SessionPhotosPanel sessionId={currentSessionId} />
+            </TacticalPanel>
+          )}
+
           {!isClosed && (
             <TacticalPanel title="Mapa">
               <Button

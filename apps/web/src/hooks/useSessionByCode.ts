@@ -7,10 +7,12 @@ type Session = {
   name: string;
   host_id: string;
   status: string;
-  expires_at: string;
+  started_at: string | null;
+  expires_at: string | null;
   origin_lat: number | null;
   origin_lng: number | null;
   movement_radius_m: number | null;
+  description: string | null;
 };
 
 type SessionByCodeState =
@@ -31,7 +33,7 @@ export function useSessionByCode(code: string | undefined) {
     const { data, error } = await supabase
       .from("sessions")
       .select(
-        "id, code, name, host_id, status, expires_at, origin_lat, origin_lng, movement_radius_m"
+        "id, code, name, host_id, status, started_at, expires_at, origin_lat, origin_lng, movement_radius_m, description"
       )
       .eq("code", code)
       .maybeSingle();

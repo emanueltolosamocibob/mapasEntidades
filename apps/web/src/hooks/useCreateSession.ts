@@ -51,10 +51,15 @@ export function useCreateSession() {
 
     if (error) {
       setState({ status: "error", message: error.message });
-      return;
+      return null;
     }
 
     setState({ status: "success", session: data as Session });
+    // Devuelve la sesión además de setear el estado -- PublishEventForm
+    // necesita el id recién creado en el mismo submit para subir las fotos
+    // elegidas en el formulario (no se pueden subir antes: la policy de
+    // Storage exige que la sesión exista y que el que sube sea su host).
+    return data as Session;
   }
 
   return { state, createSession };
