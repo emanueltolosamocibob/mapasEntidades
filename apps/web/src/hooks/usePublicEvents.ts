@@ -8,6 +8,11 @@ export type PublicEvent = {
   description: string | null;
   createdAt: string;
   coverPhotoUrl: string | null;
+  startedAt: string | null;
+  status: string;
+  hasOpenSlots: boolean;
+  acceptedCount: number;
+  totalCapacity: number | null;
 };
 
 type PublicEventsState =
@@ -22,11 +27,16 @@ type PublicEventRow = {
   description: string | null;
   created_at: string;
   cover_photo_path: string | null;
+  started_at: string | null;
+  status: string;
+  has_open_slots: boolean;
+  accepted_count: number;
+  total_capacity: number | null;
 };
 
-// list_public_events() (0040) es security definer, acotada a sesiones
-// started_at is null -- no hace falta RLS especial acá, la función ya
-// resuelve qué es "público".
+// list_public_events() (0040/0043) es security definer -- ya resuelve del
+// lado del server qué es "público" (kind='event', abiertos/en curso/
+// cerrados recientes) y si hay cupo, no hace falta lógica extra acá.
 export function usePublicEvents() {
   const [state, setState] = useState<PublicEventsState>({ status: "loading" });
 
@@ -50,6 +60,11 @@ export function usePublicEvents() {
           ? supabase.storage.from("session-photos").getPublicUrl(row.cover_photo_path).data
               .publicUrl
           : null,
+        startedAt: row.started_at,
+        status: row.status,
+        hasOpenSlots: row.has_open_slots,
+        acceptedCount: row.accepted_count,
+        totalCapacity: row.total_capacity,
       })),
     });
   }, []);
