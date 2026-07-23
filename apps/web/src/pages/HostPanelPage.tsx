@@ -223,7 +223,7 @@ function HostPanelPage() {
                 size="sm"
                 onClick={() => setShowMap((prev) => !prev)}
               >
-                {showMap ? "Ocultar mapa" : "Ver todos los equipos"}
+                {showMap ? "Ocultar mapa" : "Ver mapa de juego"}
               </Button>
               {showMap && (
                 <div className="mt-4">
