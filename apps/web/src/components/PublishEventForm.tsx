@@ -269,7 +269,7 @@ function PublishEventForm() {
         />
       </div>
 
-      <div>
+      <div className="border-t border-border pt-6">
         <SectionLabel>Fotos</SectionLabel>
         <div className="space-y-4">
           <div>
@@ -352,7 +352,7 @@ function PublishEventForm() {
         </div>
       </div>
 
-      <div>
+      <div className="border-t border-border pt-6">
         <SectionLabel>Equipos (mínimo 1)</SectionLabel>
         <div className="space-y-2">
           {teams.map((team, index) => (
@@ -393,7 +393,7 @@ function PublishEventForm() {
         )}
       </div>
 
-      <div>
+      <div className="border-t border-border pt-6">
         <SectionLabel>Punto de partida y movimiento</SectionLabel>
         <div className="space-y-3">
           <div className="flex gap-2">
