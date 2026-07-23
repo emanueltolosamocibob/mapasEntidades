@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { useCreateSession } from "../hooks/useCreateSession";
 import { usePresetFields } from "../hooks/usePresetFields";
@@ -11,10 +11,14 @@ import SessionCodeQr from "./SessionCodeQr";
 
 type Point = { lat: number; lng: number };
 type MovementMode = "free" | "restricted";
+type TeamDraft = { name: string; maxPlayers: string };
 
 const MAX_TEAMS = 10;
 const RADIUS_MIN = 100;
 const RADIUS_MAX = 10000;
+
+const textareaClassName =
+  "min-h-24 w-full border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring";
 
 const selectClassName =
   "h-9 w-full border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring disabled:opacity-50";
@@ -57,9 +61,10 @@ function ModeOption({
   );
 }
 
-function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
+function PublishEventForm() {
   const [name, setName] = useState("");
-  const [teams, setTeams] = useState(["Equipo 1"]);
+  const [description, setDescription] = useState("");
+  const [teams, setTeams] = useState<TeamDraft[]>([{ name: "Equipo 1", maxPlayers: "" }]);
   const [origin, setOrigin] = useState<Point | null>(null);
   const [movementMode, setMovementMode] = useState<MovementMode>("free");
   const [radiusMeters, setRadiusMeters] = useState("300");
@@ -71,22 +76,20 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
   const [selectedFieldId, setSelectedFieldId] = useState("");
   const [focusSignal, setFocusSignal] = useState(0);
 
-  // Avisa al padre para que no tape esta misma vista de éxito con el
-  // overlay de "partida en curso" (MAP-46) — ese overlay es para cuando
-  // se vuelve a la home después, no para el momento en que se acaba de
-  // crear (acá es donde el host todavía tiene que ver el código/QR).
-  useEffect(() => {
-    if (state.status === "success") {
-      onCreated?.();
-    }
-  }, [state.status, onCreated]);
+  function updateTeamName(index: number, value: string) {
+    setTeams((prev) => prev.map((team, i) => (i === index ? { ...team, name: value } : team)));
+  }
 
-  function updateTeam(index: number, value: string) {
-    setTeams((prev) => prev.map((team, i) => (i === index ? value : team)));
+  function updateTeamMaxPlayers(index: number, value: string) {
+    setTeams((prev) =>
+      prev.map((team, i) => (i === index ? { ...team, maxPlayers: value } : team))
+    );
   }
 
   function addTeam() {
-    setTeams((prev) => (prev.length >= MAX_TEAMS ? prev : [...prev, ""]));
+    setTeams((prev) =>
+      prev.length >= MAX_TEAMS ? prev : [...prev, { name: "", maxPlayers: "" }]
+    );
   }
 
   function removeTeam(index: number) {
@@ -108,7 +111,9 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
     setNameError(null);
     setTeamsError(null);
 
-    const cleanTeams = teams.map((team) => team.trim()).filter(Boolean);
+    const cleanTeams = teams
+      .map((team) => ({ name: team.name.trim(), maxPlayers: team.maxPlayers.trim() }))
+      .filter((team) => team.name);
     let hasError = false;
 
     if (!name.trim()) {
@@ -119,7 +124,18 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
       setTeamsError("Ingresá al menos 1 equipo con nombre.");
       hasError = true;
     }
+    for (const team of cleanTeams) {
+      if (team.maxPlayers && (!Number.isFinite(Number(team.maxPlayers)) || Number(team.maxPlayers) < 1)) {
+        setTeamsError(`El cupo de "${team.name}" tiene que ser un número mayor a 0.`);
+        hasError = true;
+      }
+    }
     if (hasError) return;
+
+    const teamsForSubmit = cleanTeams.map((team) => ({
+      name: team.name,
+      maxPlayers: team.maxPlayers ? Number(team.maxPlayers) : null,
+    }));
 
     if (movementMode === "restricted") {
       const radius = Number(radiusMeters);
@@ -128,25 +144,27 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
         return;
       }
       if (!Number.isFinite(radius) || radius < RADIUS_MIN || radius > RADIUS_MAX) {
-        setValidationError(
-          `El radio tiene que estar entre ${RADIUS_MIN} y ${RADIUS_MAX} metros.`
-        );
+        setValidationError(`El radio tiene que estar entre ${RADIUS_MIN} y ${RADIUS_MAX} metros.`);
         return;
       }
       createSession({
         name: name.trim(),
-        teams: cleanTeams.map((teamName) => ({ name: teamName, maxPlayers: null })),
+        teams: teamsForSubmit,
         origin,
         movementRadiusM: radius,
+        description: description.trim() || null,
+        startNow: false,
       });
       return;
     }
 
     createSession({
       name: name.trim(),
-      teams: cleanTeams.map((teamName) => ({ name: teamName, maxPlayers: null })),
+      teams: teamsForSubmit,
       origin,
       movementRadiusM: null,
+      description: description.trim() || null,
+      startNow: false,
     });
   }
 
@@ -154,11 +172,9 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
     return (
       <div className="space-y-4">
         <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-          Partida creada — código de acceso
+          Evento publicado — código de acceso
         </p>
-        <p className="text-3xl font-bold tracking-[0.15em] text-primary">
-          {state.session.code}
-        </p>
+        <p className="text-3xl font-bold tracking-[0.15em] text-primary">{state.session.code}</p>
         <SessionCodeQr code={state.session.code} />
         <Link
           to={`/session/${state.session.code}/host`}
@@ -173,14 +189,27 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       <div className="space-y-1.5">
+        <Label htmlFor="event-name" className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+          Nombre del evento
+        </Label>
+        <Input id="event-name" value={name} onChange={(event) => setName(event.target.value)} />
+        {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+      </div>
+
+      <div className="space-y-1.5">
         <Label
-          htmlFor="session-name"
+          htmlFor="event-description"
           className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
         >
-          Nombre de la partida
+          Descripción
         </Label>
-        <Input id="session-name" value={name} onChange={(event) => setName(event.target.value)} />
-        {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+        <textarea
+          id="event-description"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          placeholder="Contales a los jugadores de qué se trata el evento..."
+          className={textareaClassName}
+        />
       </div>
 
       <div>
@@ -189,23 +218,29 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
           {teams.map((team, index) => (
             <div key={index} className="flex items-center gap-2">
               <Input
-                value={team}
-                onChange={(event) => updateTeam(index, event.target.value)}
+                value={team.name}
+                onChange={(event) => updateTeamName(index, event.target.value)}
                 placeholder={`Equipo ${index + 1}`}
               />
+              <Input
+                type="number"
+                min={1}
+                value={team.maxPlayers}
+                onChange={(event) => updateTeamMaxPlayers(index, event.target.value)}
+                placeholder="Cupo"
+                className="w-24"
+              />
               {teams.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeTeam(index)}
-                >
+                <Button type="button" variant="ghost" size="sm" onClick={() => removeTeam(index)}>
                   Quitar
                 </Button>
               )}
             </div>
           ))}
         </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Cupo vacío = sin límite de jugadores en ese equipo.
+        </p>
         {teamsError && <p className="mt-1 text-xs text-destructive">{teamsError}</p>}
         {teams.length >= MAX_TEAMS ? (
           <p className="mt-2 text-xs text-muted-foreground">
@@ -232,10 +267,7 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
             >
               Movimiento libre
             </ModeOption>
-            <ModeOption
-              active={movementMode === "restricted"}
-              onClick={() => setMovementMode("restricted")}
-            >
+            <ModeOption active={movementMode === "restricted"} onClick={() => setMovementMode("restricted")}>
               Restringir radio
             </ModeOption>
           </div>
@@ -302,15 +334,13 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
       </div>
 
       {validationError && <p className="text-sm text-destructive">{validationError}</p>}
-      {state.status === "error" && (
-        <p className="text-sm text-destructive">{state.message}</p>
-      )}
+      {state.status === "error" && <p className="text-sm text-destructive">{state.message}</p>}
 
       <Button type="submit" disabled={state.status === "loading"} className="w-full">
-        {state.status === "loading" ? "Creando..." : "Crear partida"}
+        {state.status === "loading" ? "Publicando..." : "Publicar evento"}
       </Button>
     </form>
   );
 }
 
-export default CreateSessionForm;
+export default PublishEventForm;

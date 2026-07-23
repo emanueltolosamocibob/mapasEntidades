@@ -8,6 +8,7 @@ import EventsListPage from "./pages/EventsListPage";
 import HomePage from "./pages/HomePage";
 import HostPanelPage from "./pages/HostPanelPage";
 import PlayPage from "./pages/PlayPage";
+import PublishEventPage from "./pages/PublishEventPage";
 import ReplayPage from "./pages/ReplayPage";
 import SessionSummaryPage from "./pages/SessionSummaryPage";
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/partida-rapida" element={<CreateOrJoinPage />} />
         <Route path="/eventos" element={<EventsListPage />} />
+        <Route path="/eventos/publicar" element={<PublishEventPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/session/:code/host" element={<HostPanelPage />} />
         <Route path="/session/:code/play" element={<PlayPage />} />
