@@ -189,7 +189,7 @@ function TrailToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => 
       aria-pressed={enabled}
       aria-label="Mostrar rastro de jugadores"
       title="Mostrar rastro de jugadores"
-      className={`absolute top-3 right-14 z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+      className={`flex h-9 w-9 shrink-0 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
         enabled ? "bg-primary/20" : ""
       }`}
     >
@@ -212,7 +212,7 @@ function DistanceLinesToggle({
       aria-pressed={enabled}
       aria-label="Mostrar líneas de distancia"
       title="Mostrar líneas de distancia"
-      className={`absolute top-3 right-3 z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+      className={`flex h-9 w-9 shrink-0 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
         enabled ? "bg-primary/20" : ""
       }`}
     >
@@ -241,7 +241,7 @@ function MapModeToggle({
       onClick={onToggle}
       aria-label="Cambiar vista del mapa"
       title="Cambiar vista del mapa"
-      className={`absolute top-3 right-[100px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+      className={`flex h-9 w-9 shrink-0 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
         mode !== "dark" ? "bg-primary/20" : ""
       }`}
     >
@@ -286,7 +286,7 @@ function FullscreenToggle({
       aria-pressed={isFullscreen}
       aria-label="Pantalla completa"
       title="Pantalla completa"
-      className="absolute top-3 right-[188px] z-[1000] flex h-9 w-9 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
+      className="flex h-9 w-9 shrink-0 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
     >
       {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
     </button>
@@ -732,17 +732,32 @@ function MapView({
       {/* La brújula "de verdad" vive arriba del panel de "Envío de posición"
           en PlayPage.tsx (no montada en el mapa) -- esta copia solo se ve
           en fullscreen, donde el resto de la página (sidebar incluido)
-          queda tapado por el mapa (ver .map-pseudo-fullscreen). */}
-      {isFullscreen && <Compass variant="overlay" />}
+          queda tapado por el mapa (ver .map-pseudo-fullscreen). En mobile
+          ni siquiera esta copia se muestra -- a ese tamaño de pantalla
+          suma ruido en un fullscreen que ya está ajustado, a pedido. */}
+      {isFullscreen && (
+        <div className="hidden sm:block">
+          <Compass variant="overlay" />
+        </div>
+      )}
       <TacticalZoomControl positions={positions} restriction={restriction} />
-      <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
-      <TrailToggle enabled={showTrails} onToggle={toggleTrails} />
-      <MapModeToggle mode={mapMode} onToggle={cycleMapMode} />
-      <FullscreenToggle isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
-      <RecenterButton
-        className="top-3 right-[144px] bottom-auto left-auto"
-        onPress={() => showStatus("Centrando en mi posición...")}
-      />
+      {/* Un solo contenedor flex en vez de 5 botones con right-X fijo
+          independiente -- en mobile, esos offsets no dejaban lugar y los
+          botones quedaban amontonados/pisados contra el control de zoom
+          (ver captura del usuario). w-32 fuerza como máximo 3 por fila en
+          mobile (el resto pasa a una segunda fila, en vez de superponerse
+          con el control de zoom que vive del otro lado); en sm+ hay lugar
+          de sobra para las 5 en una sola fila, como antes. */}
+      <div className="absolute top-3 right-3 z-[1000] flex w-32 flex-wrap justify-end gap-2 sm:w-auto sm:max-w-[calc(100%-1.5rem)]">
+        <FullscreenToggle isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
+        <RecenterButton
+          className="static"
+          onPress={() => showStatus("Centrando en mi posición...")}
+        />
+        <MapModeToggle mode={mapMode} onToggle={cycleMapMode} />
+        <TrailToggle enabled={showTrails} onToggle={toggleTrails} />
+        <DistanceLinesToggle enabled={showDistanceLines} onToggle={toggleDistanceLines} />
+      </div>
       {statusLabels.length > 0 && (
         <div className="pointer-events-none absolute bottom-16 left-3 z-[1000] flex flex-col gap-1">
           {statusLabels.map((item) => (
