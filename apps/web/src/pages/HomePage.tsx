@@ -1,7 +1,34 @@
 import { Link } from "react-router";
-import { CalendarDays, Zap } from "lucide-react";
+import GoogleAccountPanel from "../components/GoogleAccountPanel";
 import TacticalPanel from "../components/TacticalPanel";
 import { Button } from "../components/ui/button";
+
+// Íconos custom rellenos, bordes rectos -- mismo criterio "estilo stencil
+// táctico" que MAP_MARKER_SHAPE_SVG en tacticalIcon.ts, en vez de los
+// íconos redondeados/genéricos de lucide-react.
+function FastForwardIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="mb-3 h-6 w-6 text-primary" fill="currentColor">
+      <polygon points="2,4 12,12 2,20" />
+      <polygon points="12,4 22,12 12,20" />
+    </svg>
+  );
+}
+
+function WaypointIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="mb-3 h-6 w-6 text-primary"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
 function HomePage() {
   return (
@@ -18,17 +45,15 @@ function HomePage() {
 
         <div className="grid gap-6 sm:grid-cols-2">
           <TacticalPanel title="Partida rápida">
-            <Zap className="mb-3 h-6 w-6 text-primary" />
-            <p className="mb-4 text-sm text-muted-foreground">
-              Creá o unite a una partida al toque, como hasta ahora.
-            </p>
+            <FastForwardIcon />
+            <p className="mb-4 text-sm text-muted-foreground">Creá o unite a una partida rápida.</p>
             <Button nativeButton={false} render={<Link to="/partida-rapida" />}>
               Entrar
             </Button>
           </TacticalPanel>
 
           <TacticalPanel title="Eventos">
-            <CalendarDays className="mb-3 h-6 w-6 text-primary" />
+            <WaypointIcon />
             <p className="mb-4 text-sm text-muted-foreground">
               Convocatorias publicadas con anticipación — anotate a un equipo antes del día del
               partido.
@@ -36,6 +61,12 @@ function HomePage() {
             <Button nativeButton={false} render={<Link to="/eventos" />}>
               Ver eventos
             </Button>
+          </TacticalPanel>
+        </div>
+
+        <div className="mt-6">
+          <TacticalPanel title="Cuenta de Google">
+            <GoogleAccountPanel />
           </TacticalPanel>
         </div>
       </div>

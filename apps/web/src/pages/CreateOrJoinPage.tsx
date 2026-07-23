@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import CreateSessionForm from "../components/CreateSessionForm";
-import GoogleAccountPanel from "../components/GoogleAccountPanel";
 import JoinSessionForm from "../components/JoinSessionForm";
 import TacticalPanel from "../components/TacticalPanel";
 import { Button } from "../components/ui/button";
@@ -53,11 +52,7 @@ function CreateOrJoinPage() {
           </TacticalPanel>
         </div>
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          <TacticalPanel title="Cuenta de Google">
-            <GoogleAccountPanel />
-          </TacticalPanel>
-
+        <div className="mt-6">
           <TacticalPanel title="¿Problemas para verte en el mapa?" accent="destructive">
             <p className="text-sm text-destructive/90">
               Activá/permití el acceso a tu ubicación en la configuración de tu navegador o
