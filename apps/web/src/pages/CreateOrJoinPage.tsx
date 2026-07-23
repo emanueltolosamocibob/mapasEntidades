@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import CreateSessionForm from "../components/CreateSessionForm";
-import GoogleAccountPanel from "../components/GoogleAccountPanel";
 import JoinSessionForm from "../components/JoinSessionForm";
 import TacticalPanel from "../components/TacticalPanel";
 import { Button } from "../components/ui/button";
@@ -22,11 +21,14 @@ function CreateOrJoinPage() {
     <main className="tactical-grid min-h-svh bg-background px-4 py-10 text-foreground sm:px-8">
       <div className="mx-auto max-w-3xl">
         <header className="mb-10 border-b border-border pb-6">
-          <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">
-            Sistema de tracking en tiempo real
-          </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
-            Airsoft<span className="text-primary">Maps</span>
+          <Link
+            to="/"
+            className="text-xs tracking-[0.2em] text-muted-foreground uppercase hover:text-primary"
+          >
+            ← Volver
+          </Link>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            Partida <span className="text-primary">rápida</span>
           </h1>
         </header>
 
@@ -50,11 +52,7 @@ function CreateOrJoinPage() {
           </TacticalPanel>
         </div>
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          <TacticalPanel title="Cuenta de Google">
-            <GoogleAccountPanel />
-          </TacticalPanel>
-
+        <div className="mt-6">
           <TacticalPanel title="¿Problemas para verte en el mapa?" accent="destructive">
             <p className="text-sm text-destructive/90">
               Activá/permití el acceso a tu ubicación en la configuración de tu navegador o
