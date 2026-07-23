@@ -59,7 +59,7 @@ function ModeOption({
 
 function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
   const [name, setName] = useState("");
-  const [teams, setTeams] = useState(["Rojo", "Azul"]);
+  const [teams, setTeams] = useState(["Equipo 1"]);
   const [origin, setOrigin] = useState<Point | null>(null);
   const [movementMode, setMovementMode] = useState<MovementMode>("free");
   const [radiusMeters, setRadiusMeters] = useState("300");
@@ -115,8 +115,8 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
       setNameError("Ingresá un nombre válido.");
       hasError = true;
     }
-    if (cleanTeams.length < 2) {
-      setTeamsError("Ingresá al menos 2 equipos con nombre.");
+    if (cleanTeams.length < 1) {
+      setTeamsError("Ingresá al menos 1 equipo con nombre.");
       hasError = true;
     }
     if (hasError) return;
@@ -174,7 +174,7 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
       </div>
 
       <div>
-        <SectionLabel>Equipos (mínimo 2)</SectionLabel>
+        <SectionLabel>Equipos (mínimo 1)</SectionLabel>
         <div className="space-y-2">
           {teams.map((team, index) => (
             <div key={index} className="flex items-center gap-2">
@@ -183,7 +183,7 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
                 onChange={(event) => updateTeam(index, event.target.value)}
                 placeholder={`Equipo ${index + 1}`}
               />
-              {teams.length > 2 && (
+              {teams.length > 1 && (
                 <Button
                   type="button"
                   variant="ghost"
