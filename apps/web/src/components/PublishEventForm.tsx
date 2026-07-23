@@ -8,6 +8,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import OriginPicker from "./OriginPicker";
 import SessionCodeQr from "./SessionCodeQr";
+import SessionPhotosPanel from "./SessionPhotosPanel";
 
 type Point = { lat: number; lng: number };
 type MovementMode = "free" | "restricted";
@@ -176,6 +177,14 @@ function PublishEventForm() {
         </p>
         <p className="text-3xl font-bold tracking-[0.15em] text-primary">{state.session.code}</p>
         <SessionCodeQr code={state.session.code} />
+
+        <div className="border-t border-border pt-4">
+          <p className="mb-3 text-xs tracking-[0.2em] text-muted-foreground uppercase">
+            Fotos del evento
+          </p>
+          <SessionPhotosPanel sessionId={state.session.id} />
+        </div>
+
         <Link
           to={`/session/${state.session.code}/host`}
           className="block text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"

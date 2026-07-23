@@ -9,7 +9,7 @@ export type PastSession = {
   host_id: string;
   status: string;
   created_at: string;
-  expires_at: string;
+  expires_at: string | null;
 };
 
 type PastSessionsState =
