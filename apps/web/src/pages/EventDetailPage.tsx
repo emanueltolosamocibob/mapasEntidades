@@ -5,6 +5,7 @@ import TacticalPanel from "../components/TacticalPanel";
 import EventStatusTag from "../components/EventStatusTag";
 import { useEventListing, type EventListingTeam } from "../hooks/useEventListing";
 import { getEventStatus } from "../lib/eventStatus";
+import EventJoinForm from "../components/EventJoinForm";
 
 function CenteredMessage({ children }: { children: ReactNode }) {
   return (
@@ -49,7 +50,7 @@ function TeamRoster({ team }: { team: EventListingTeam }) {
 
 function EventDetailPage() {
   const { code } = useParams<{ code: string }>();
-  const { state } = useEventListing(code);
+  const { state, refresh } = useEventListing(code);
 
   if (state.status === "loading") {
     return <CenteredMessage>Cargando evento...</CenteredMessage>;
@@ -149,6 +150,12 @@ function EventDetailPage() {
           <TacticalPanel title="Mapa">
             <MapView positions={[]} restriction={restriction} />
           </TacticalPanel>
+
+          {event.startedAt === null && event.teams.length > 0 && (
+            <TacticalPanel title="Inscribirme">
+              <EventJoinForm code={event.code} teams={event.teams} onJoined={refresh} />
+            </TacticalPanel>
+          )}
         </div>
       </div>
     </main>
