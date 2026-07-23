@@ -221,19 +221,19 @@ function PlayPage() {
             sessionId={sessionId}
             userId={userId}
           />
-          <div className="absolute top-16 left-3 z-[1000] flex flex-col items-start gap-1 sm:hidden">
-            <span className="border border-primary bg-background/90 px-2 py-1 text-xs tracking-[0.15em] text-primary">
-              {code}
-            </span>
-            {sendError && (
-              <span className="flex items-center gap-1.5 border border-destructive bg-background/90 px-2 py-1 text-xs tracking-[0.15em] text-destructive">
-                <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                Sin señal
-              </span>
-            )}
-          </div>
         </div>
         <div className="flex w-full flex-col gap-4 sm:w-64">
+          <TacticalPanel title="Partida" className="sm:hidden">
+            <div className="flex flex-col items-start gap-1.5">
+              <span className="text-xs tracking-[0.15em] text-primary">{code}</span>
+              {sendError && (
+                <span className="flex items-center gap-1.5 text-xs tracking-[0.15em] text-destructive">
+                  <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                  Sin señal
+                </span>
+              )}
+            </div>
+          </TacticalPanel>
           <Compass variant="inline" />
           <TacticalPanel title="Envío de posición">
             <div className="flex gap-1.5">
