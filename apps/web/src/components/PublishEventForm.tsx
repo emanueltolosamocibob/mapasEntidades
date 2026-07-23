@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { useCreateSession } from "../hooks/useCreateSession";
+import { usePresetFields } from "../hooks/usePresetFields";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -18,6 +19,13 @@ const RADIUS_MAX = 10000;
 
 const textareaClassName =
   "min-h-24 w-full border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring";
+
+const selectClassName =
+  "h-9 w-full border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring disabled:opacity-50";
+
+// Los <option> de un <select> nativo no heredan los colores de Tailwind/CSS
+// vars del <select> en todos los navegadores — hay que fijarlos a mano.
+const optionStyle = { backgroundColor: "var(--popover)", color: "var(--popover-foreground)" };
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -64,6 +72,9 @@ function PublishEventForm() {
   const [teamsError, setTeamsError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const { state, createSession } = useCreateSession();
+  const presetFields = usePresetFields();
+  const [selectedFieldId, setSelectedFieldId] = useState("");
+  const [focusSignal, setFocusSignal] = useState(0);
 
   function updateTeamName(index: number, value: string) {
     setTeams((prev) => prev.map((team, i) => (i === index ? { ...team, name: value } : team)));
@@ -167,7 +178,7 @@ function PublishEventForm() {
         <SessionCodeQr code={state.session.code} />
         <Link
           to={`/session/${state.session.code}/host`}
-          className="inline-block text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
+          className="block text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
         >
           Ir al panel de anfitrión →
         </Link>
@@ -251,6 +262,7 @@ function PublishEventForm() {
               onClick={() => {
                 setMovementMode("free");
                 setOrigin(null);
+                setSelectedFieldId("");
               }}
             >
               Movimiento libre
@@ -262,11 +274,47 @@ function PublishEventForm() {
 
           {movementMode === "restricted" && (
             <>
-              <OriginPicker value={origin} onChange={setOrigin} radiusMeters={
-                Number(radiusMeters) > 0
-                  ? Math.min(Math.max(Number(radiusMeters), RADIUS_MIN), RADIUS_MAX)
-                  : 0
-              } />
+              {presetFields.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+                    Campo predefinido
+                  </Label>
+                  <select
+                    className={selectClassName}
+                    value={selectedFieldId}
+                    onChange={(event) => {
+                      const field = presetFields.find((f) => f.id === event.target.value);
+                      setSelectedFieldId(event.target.value);
+                      if (field) {
+                        setOrigin({ lat: field.lat, lng: field.lng });
+                        setFocusSignal((n) => n + 1);
+                      }
+                    }}
+                  >
+                    <option value="" disabled style={optionStyle}>
+                      Elegir campo
+                    </option>
+                    {presetFields.map((field) => (
+                      <option key={field.id} value={field.id} style={optionStyle}>
+                        {field.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <OriginPicker
+                value={origin}
+                onChange={(point) => {
+                  setSelectedFieldId("");
+                  setOrigin(point);
+                }}
+                radiusMeters={
+                  Number(radiusMeters) > 0
+                    ? Math.min(Math.max(Number(radiusMeters), RADIUS_MIN), RADIUS_MAX)
+                    : 0
+                }
+                focusSignal={focusSignal}
+              />
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Restringir a</span>
                 <Input

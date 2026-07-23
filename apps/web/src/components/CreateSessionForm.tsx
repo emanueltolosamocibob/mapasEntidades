@@ -162,7 +162,7 @@ function CreateSessionForm({ onCreated }: { onCreated?: () => void }) {
         <SessionCodeQr code={state.session.code} />
         <Link
           to={`/session/${state.session.code}/host`}
-          className="inline-block text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
+          className="block text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
         >
           Ir al panel de anfitrión →
         </Link>
