@@ -31,7 +31,7 @@ function JoinSessionForm() {
   const userId = session.status === "ready" ? session.user.id : undefined;
   const isAnonymous = session.status === "ready" ? session.isAnonymous : true;
   const sessionId =
-    state.status === "pending" ? state.participant.session_id : undefined;
+    state.status === "submitted" ? state.participant.session_id : undefined;
   const myParticipant = useMyParticipant(sessionId, userId);
 
   const { state: profileState } = useUserProfile(
@@ -88,7 +88,7 @@ function JoinSessionForm() {
     joinSession(normalizedCode, nickname.trim(), role);
   }
 
-  if (state.status === "pending") {
+  if (state.status === "submitted") {
     if (myParticipant?.status === "rejected") {
       return (
         <p className="text-sm text-muted-foreground">

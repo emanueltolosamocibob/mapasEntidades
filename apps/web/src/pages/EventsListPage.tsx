@@ -1,8 +1,11 @@
-import { Link } from "react-router";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
 import TacticalPanel from "../components/TacticalPanel";
 import EventStatusTag from "../components/EventStatusTag";
 import EventCapacityTag from "../components/EventCapacityTag";
+import GoogleSignInDialog from "../components/GoogleSignInDialog";
 import { Button } from "../components/ui/button";
+import { useSession } from "../contexts/SessionContext";
 import { usePublicEvents, type PublicEvent } from "../hooks/usePublicEvents";
 import { getEventStatus } from "../lib/eventStatus";
 
@@ -51,9 +54,25 @@ function EventCard({ event }: { event: PublicEvent }) {
 
 function EventsListPage() {
   const { state } = usePublicEvents();
+  const session = useSession();
+  const navigate = useNavigate();
+  const [signInOpen, setSignInOpen] = useState(false);
+
+  function handleMyEventsClick() {
+    if (session.status === "ready" && session.isAnonymous) {
+      setSignInOpen(true);
+      return;
+    }
+    navigate("/eventos/mios");
+  }
 
   return (
     <main className="tactical-grid min-h-svh bg-background px-4 py-10 text-foreground sm:px-8">
+      <GoogleSignInDialog
+        open={signInOpen}
+        message="Iniciá sesión con Google para ver y configurar los eventos que publicaste."
+        onCancel={() => setSignInOpen(false)}
+      />
       <div className="mx-auto max-w-3xl">
         <header className="mb-10 flex items-end justify-between gap-4 border-b border-border pb-6">
           <div>
@@ -67,9 +86,14 @@ function EventsListPage() {
               <span className="text-primary">Eventos</span>
             </h1>
           </div>
-          <Button nativeButton={false} render={<Link to="/eventos/publicar" />}>
-            + Publicar evento
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button type="button" variant="outline" onClick={handleMyEventsClick}>
+              Mis eventos
+            </Button>
+            <Button nativeButton={false} render={<Link to="/eventos/publicar" />}>
+              + Publicar evento
+            </Button>
+          </div>
         </header>
 
         {state.status === "loading" && (
