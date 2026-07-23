@@ -4,6 +4,8 @@ import { Analytics } from "@vercel/analytics/react";
 import { useSession } from "./contexts/SessionContext";
 import AccountPage from "./pages/AccountPage";
 import CreateOrJoinPage from "./pages/CreateOrJoinPage";
+import EventsListPage from "./pages/EventsListPage";
+import HomePage from "./pages/HomePage";
 import HostPanelPage from "./pages/HostPanelPage";
 import PlayPage from "./pages/PlayPage";
 import ReplayPage from "./pages/ReplayPage";
@@ -31,7 +33,9 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<CreateOrJoinPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/partida-rapida" element={<CreateOrJoinPage />} />
+        <Route path="/eventos" element={<EventsListPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/session/:code/host" element={<HostPanelPage />} />
         <Route path="/session/:code/play" element={<PlayPage />} />

@@ -40,7 +40,7 @@ function ReplayPage() {
           Iniciá sesión con Google desde la pantalla principal para ver el replay.
         </p>
         <Link
-          to="/"
+          to="/partida-rapida"
           className="text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
         >
           Volver al inicio
