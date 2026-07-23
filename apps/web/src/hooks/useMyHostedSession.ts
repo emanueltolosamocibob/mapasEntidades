@@ -13,11 +13,18 @@ export function useMyHostedSession(userId: string | undefined) {
       return;
     }
 
+    // started_at is not null -- mismo criterio de "sesión activa" que usa
+    // create_session (0043) para bloquear una partida rápida nueva. Sin este
+    // filtro, un evento publicado y todavía sin arrancar (o varios a la vez)
+    // aparecía acá igual, porque no tiene expires_at hasta que se inicia, y
+    // tapaba el formulario de "Crear partida" con el overlay de "partida en
+    // curso" sin que hubiera ninguna partida corriendo de verdad.
     const { data } = await supabase
       .from("sessions")
-      .select("id, code, name, status, expires_at")
+      .select("id, code, name, status, expires_at, started_at")
       .eq("host_id", userId)
       .neq("status", "closed")
+      .not("started_at", "is", null)
       .order("created_at", { ascending: false });
 
     const active = (data ?? []).find((s) => !isSessionClosed(s));
