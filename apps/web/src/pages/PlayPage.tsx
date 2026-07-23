@@ -223,6 +223,7 @@ function PlayPage() {
           />
         </div>
         <div className="flex w-full flex-col gap-4 sm:w-64">
+          <Compass variant="inline" />
           <TacticalPanel title="Partida" className="sm:hidden">
             <div className="flex flex-col items-start gap-1.5">
               <span className="text-xs tracking-[0.15em] text-primary">{code}</span>
@@ -234,7 +235,6 @@ function PlayPage() {
               )}
             </div>
           </TacticalPanel>
-          <Compass variant="inline" />
           <TacticalPanel title="Envío de posición">
             <div className="flex gap-1.5">
               {SEND_INTERVAL_OPTIONS.map((option) => (
