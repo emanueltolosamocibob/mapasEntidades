@@ -44,6 +44,14 @@ function EventCard({ event }: { event: PublicEvent }) {
       </div>
       <div className="p-4">
         <p className="text-sm font-bold text-foreground uppercase">{event.name}</p>
+        {event.scheduledAt && (
+          <p className="mt-1 text-xs tracking-[0.1em] text-primary uppercase">
+            {new Date(event.scheduledAt).toLocaleString("es-AR", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </p>
+        )}
         {event.description && (
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{event.description}</p>
         )}

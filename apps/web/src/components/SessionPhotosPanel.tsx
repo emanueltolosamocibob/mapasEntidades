@@ -22,10 +22,10 @@ function SessionPhotosPanel({ sessionId }: { sessionId: string }) {
   }
 
   async function handleDocumentsChange(event: ChangeEvent<HTMLInputElement>) {
-    const files = event.target.files;
+    const files = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!files || files.length === 0) return;
-    for (const file of Array.from(files)) {
+    if (files.length === 0) return;
+    for (const file of files) {
       await uploadPhoto(sessionId, file, "document");
     }
     refresh();

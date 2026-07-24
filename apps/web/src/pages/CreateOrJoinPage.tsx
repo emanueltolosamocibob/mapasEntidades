@@ -23,7 +23,7 @@ function CreateOrJoinPage() {
         <header className="mb-10 border-b border-border pb-6">
           <Link
             to="/"
-            className="text-xs tracking-[0.2em] text-muted-foreground uppercase hover:text-primary"
+            className="text-sm tracking-[0.2em] text-white uppercase hover:text-primary"
           >
             ← Volver
           </Link>

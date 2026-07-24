@@ -44,9 +44,9 @@ function HomePage() {
         </header>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          <TacticalPanel title="Partida rápida">
+          <TacticalPanel title="Partida privada">
             <FastForwardIcon />
-            <p className="mb-4 text-sm text-muted-foreground">Creá o unite a una partida rápida.</p>
+            <p className="mb-4 text-sm text-muted-foreground">Creá o unite a una partida privada.</p>
             <Button nativeButton={false} render={<Link to="/partida-rapida" />}>
               Entrar
             </Button>
@@ -55,8 +55,7 @@ function HomePage() {
           <TacticalPanel title="Eventos">
             <WaypointIcon />
             <p className="mb-4 text-sm text-muted-foreground">
-              Convocatorias publicadas con anticipación — anotate a un equipo antes del día del
-              partido.
+              Eventos públicos - anotate a un equipo ya.
             </p>
             <Button nativeButton={false} render={<Link to="/eventos" />}>
               Ver eventos

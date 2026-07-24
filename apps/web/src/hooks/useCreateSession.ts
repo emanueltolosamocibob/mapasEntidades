@@ -15,6 +15,17 @@ type Session = {
   description: string | null;
 };
 
+type EventDetails = {
+  scheduledAt?: string | null;
+  organizerName?: string | null;
+  contactPhone?: string | null;
+  address?: string | null;
+  byopCost?: number | null;
+  byopDeposit?: number | null;
+  rentalCost?: number | null;
+  rentalDeposit?: number | null;
+};
+
 type CreateSessionState =
   | { status: "idle" }
   | { status: "loading" }
@@ -27,14 +38,16 @@ type Team = { name: string; maxPlayers: number | null };
 export function useCreateSession() {
   const [state, setState] = useState<CreateSessionState>({ status: "idle" });
 
-  async function createSession(params: {
-    name: string;
-    teams: Team[];
-    origin: Origin;
-    movementRadiusM: number | null;
-    description?: string | null;
-    startNow?: boolean;
-  }) {
+  async function createSession(
+    params: {
+      name: string;
+      teams: Team[];
+      origin: Origin;
+      movementRadiusM: number | null;
+      description?: string | null;
+      startNow?: boolean;
+    } & EventDetails
+  ) {
     setState({ status: "loading" });
 
     const { data, error } = await supabase.rpc("create_session", {
@@ -47,6 +60,14 @@ export function useCreateSession() {
       p_movement_radius_m: params.movementRadiusM,
       p_description: params.description ?? null,
       p_start_now: params.startNow ?? true,
+      p_scheduled_at: params.scheduledAt ?? null,
+      p_organizer_name: params.organizerName ?? null,
+      p_contact_phone: params.contactPhone ?? null,
+      p_address: params.address ?? null,
+      p_byop_cost: params.byopCost ?? null,
+      p_byop_deposit: params.byopDeposit ?? null,
+      p_rental_cost: params.rentalCost ?? null,
+      p_rental_deposit: params.rentalDeposit ?? null,
     });
 
     if (error) {

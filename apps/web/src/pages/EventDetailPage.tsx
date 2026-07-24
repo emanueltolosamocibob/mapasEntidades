@@ -114,6 +114,77 @@ function EventDetailPage() {
             />
           )}
 
+          <TacticalPanel title="Detalles">
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
+                  Fecha y hora
+                </dt>
+                <dd className="text-foreground">
+                  {event.scheduledAt
+                    ? new Date(event.scheduledAt).toLocaleString("es-AR", {
+                        dateStyle: "long",
+                        timeStyle: "short",
+                      })
+                    : "A confirmar"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
+                  Organizador
+                </dt>
+                <dd className="text-foreground">{event.organizerName || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
+                  Contacto
+                </dt>
+                <dd className="text-foreground">{event.contactPhone || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
+                  Dirección
+                </dt>
+                <dd>
+                  {event.address ? (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
+                    >
+                      {event.address}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
+              </div>
+              {(event.byopCost !== null || event.byopDeposit !== null) && (
+                <div>
+                  <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
+                    Costo BYOP
+                  </dt>
+                  <dd className="text-foreground">
+                    {event.byopCost !== null ? `$${event.byopCost}` : "—"}
+                    {event.byopDeposit !== null && ` (seña $${event.byopDeposit})`}
+                  </dd>
+                </div>
+              )}
+              {(event.rentalCost !== null || event.rentalDeposit !== null) && (
+                <div>
+                  <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
+                    Costo alquiler de equipo
+                  </dt>
+                  <dd className="text-foreground">
+                    {event.rentalCost !== null ? `$${event.rentalCost}` : "—"}
+                    {event.rentalDeposit !== null && ` (seña $${event.rentalDeposit})`}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </TacticalPanel>
+
           <TacticalPanel title="Descripción">
             <p className="text-sm whitespace-pre-wrap text-muted-foreground">
               {event.description || "El anfitrión todavía no cargó una descripción."}
