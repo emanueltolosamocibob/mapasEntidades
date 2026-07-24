@@ -294,11 +294,10 @@ function FullscreenToggle({
   );
 }
 
-// Agrega un marcador en el centro actual del mapa (el retículo de
-// CenterReticle) -- reemplaza al gesto de mantener presionado, que
-// confundía fácilmente con un pan/drag y no era descubrible.
-function AddMarkerButton({ onPress }: { onPress: (point: { lat: number; lng: number }) => void }) {
-  const map = useMap();
+// Botón que entra/sale del "modo colocar marcador" -- reemplaza al gesto
+// de mantener presionado, que confundía fácilmente con un pan/drag y no
+// era descubrible.
+function AddMarkerButton({ active, onToggle }: { active: boolean; onToggle: () => void }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -309,14 +308,55 @@ function AddMarkerButton({ onPress }: { onPress: (point: { lat: number; lng: num
     <button
       ref={buttonRef}
       type="button"
-      onClick={() => onPress(map.getCenter())}
+      onClick={onToggle}
+      aria-pressed={active}
       aria-label="Agregar marcador"
       title="Agregar marcador"
-      className="flex h-9 w-9 shrink-0 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10 ${
+        active ? "bg-primary/20" : ""
+      }`}
     >
       <MapPin className="h-4 w-4" />
     </button>
   );
+}
+
+// Mientras "active", bloquea el pan del mapa (map.dragging) y espera un
+// click -- ese click es el punto donde se coloca el marcador, en vez de
+// usar siempre el centro/retículo. Sale del modo automáticamente apenas
+// se registra el click (onPlace ya dispara la apertura del picker).
+function MarkerPlacementController({
+  active,
+  onPlace,
+}: {
+  active: boolean;
+  onPlace: (point: { lat: number; lng: number }) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+    if (active) {
+      map.dragging.disable();
+      container.style.cursor = "crosshair";
+    } else {
+      map.dragging.enable();
+      container.style.cursor = "";
+    }
+    return () => {
+      map.dragging.enable();
+      container.style.cursor = "";
+    };
+  }, [active, map]);
+
+  useMapEvents({
+    click(event) {
+      if (!active) return;
+      onPlace({ lat: event.latlng.lat, lng: event.latlng.lng });
+    },
+  });
+
+  return null;
 }
 
 // react-leaflet v5 solo lee el className de MapContainer en el mount inicial
@@ -528,7 +568,19 @@ function MapView({
     lat: number;
     lng: number;
   } | null>(null);
+  const [placingMarker, setPlacingMarker] = useState(false);
   const [markerPendingDelete, setMarkerPendingDelete] = useState<MapMarker | null>(null);
+
+  function togglePlacingMarker() {
+    const next = !placingMarker;
+    setPlacingMarker(next);
+    showStatus(next ? "Tocá el mapa para colocar el marcador" : "Modo colocar marcador: OFF");
+  }
+
+  function handlePlaceMarker(point: { lat: number; lng: number }) {
+    setPlacingMarker(false);
+    setPendingMarkerPoint(point);
+  }
 
   async function handleConfirmAddMarker(iconType: MapMarkerIconType, label: string) {
     if (!pendingMarkerPoint || !sessionId || !myTeamId || !userId) return;
@@ -626,6 +678,16 @@ function MapView({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isFullscreen]);
 
+  // Esc también cancela el modo colocar marcador, mismo motivo que arriba.
+  useEffect(() => {
+    if (!placingMarker) return;
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setPlacingMarker(false);
+    }
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [placingMarker]);
+
   return (
     <MapContainer
       center={initialCenter}
@@ -700,6 +762,9 @@ function MapView({
           }
         />
       ))}
+      {canEditMarkers && (
+        <MarkerPlacementController active={placingMarker} onPlace={handlePlaceMarker} />
+      )}
       <MapModeClassSync mode={mapMode} />
       <CenterReticle />
       {/* La brújula "de verdad" vive arriba del panel de "Envío de posición"
@@ -723,7 +788,9 @@ function MapView({
           de sobra para las 5 en una sola fila, como antes. */}
       <div className="absolute top-3 right-3 z-[1000] flex w-32 flex-wrap justify-end gap-2 sm:w-auto sm:max-w-[calc(100%-1.5rem)]">
         <FullscreenToggle isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
-        {canEditMarkers && <AddMarkerButton onPress={setPendingMarkerPoint} />}
+        {canEditMarkers && (
+          <AddMarkerButton active={placingMarker} onToggle={togglePlacingMarker} />
+        )}
         <RecenterButton
           className="static"
           onPress={() => showStatus("Centrando en mi posición...")}
