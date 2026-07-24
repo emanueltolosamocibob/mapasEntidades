@@ -24,6 +24,7 @@ type EventDetails = {
   byopDeposit?: number | null;
   rentalCost?: number | null;
   rentalDeposit?: number | null;
+  isPublic?: boolean;
 };
 
 type CreateSessionState =
@@ -68,6 +69,7 @@ export function useCreateSession() {
       p_byop_deposit: params.byopDeposit ?? null,
       p_rental_cost: params.rentalCost ?? null,
       p_rental_deposit: params.rentalDeposit ?? null,
+      p_is_public: params.isPublic ?? true,
     });
 
     if (error) {
