@@ -23,9 +23,11 @@ const ROLE_OPTIONS = [
 function AcceptedParticipantsList({
   participants,
   teams,
+  readOnly = false,
 }: {
   participants: Participant[];
   teams: Team[];
+  readOnly?: boolean;
 }) {
   const { reassignTeam, assignRole, kick, pendingId, error } = useModerateParticipant();
 
@@ -68,7 +70,7 @@ function AcceptedParticipantsList({
                       <select
                         className={selectClassName}
                         value={participant.team_id ?? ""}
-                        disabled={pendingId === participant.id}
+                        disabled={readOnly || pendingId === participant.id}
                         onChange={(event) => reassignTeam(participant.id, event.target.value)}
                       >
                         {teams.map((t) => (
@@ -83,7 +85,7 @@ function AcceptedParticipantsList({
                       <select
                         className={selectClassName}
                         value={participant.role}
-                        disabled={pendingId === participant.id}
+                        disabled={readOnly || pendingId === participant.id}
                         onChange={(event) => assignRole(participant.id, event.target.value)}
                       >
                         {ROLE_OPTIONS.map((r) => (
@@ -93,16 +95,18 @@ function AcceptedParticipantsList({
                         ))}
                       </select>
                     </label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      disabled={pendingId === participant.id}
-                      onClick={() => kick(participant.id)}
-                    >
-                      Expulsar
-                    </Button>
+                    {!readOnly && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        disabled={pendingId === participant.id}
+                        onClick={() => kick(participant.id)}
+                      >
+                        Expulsar
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import MapView from "../components/MapView";
 import TacticalPanel from "../components/TacticalPanel";
 import EventStatusTag from "../components/EventStatusTag";
+import { Button } from "../components/ui/button";
 import { useEventListing, type EventListingTeam } from "../hooks/useEventListing";
 import { getEventStatus } from "../lib/eventStatus";
 import EventJoinForm from "../components/EventJoinForm";
@@ -51,6 +52,7 @@ function TeamRoster({ team }: { team: EventListingTeam }) {
 function EventDetailPage() {
   const { code } = useParams<{ code: string }>();
   const { state, refresh } = useEventListing(code);
+  const [showMap, setShowMap] = useState(false);
 
   if (state.status === "loading") {
     return <CenteredMessage>Cargando evento...</CenteredMessage>;
@@ -232,7 +234,16 @@ function EventDetailPage() {
           </TacticalPanel>
 
           <TacticalPanel title="Mapa">
-            <MapView positions={[]} restriction={restriction} />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMap((current) => !current)}
+              className={showMap ? "mb-4" : ""}
+            >
+              {showMap ? "Ocultar mapa" : "Mostrar mapa"}
+            </Button>
+            {showMap && <MapView positions={[]} restriction={restriction} />}
           </TacticalPanel>
 
           {event.startedAt === null && event.teams.length > 0 && (
