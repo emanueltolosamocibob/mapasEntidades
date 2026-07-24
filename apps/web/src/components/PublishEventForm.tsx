@@ -124,6 +124,7 @@ function PublishEventForm() {
   const [rentalCost, setRentalCost] = useState("");
   const [rentalDeposit, setRentalDeposit] = useState("");
   const [isPublic, setIsPublic] = useState(true);
+  const [requiresApproval, setRequiresApproval] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [teamsError, setTeamsError] = useState<string | null>(null);
@@ -329,6 +330,7 @@ function PublishEventForm() {
       rentalCost: parsedRentalCost ?? null,
       rentalDeposit: parsedRentalDeposit ?? null,
       isPublic,
+      requiresApproval,
     });
     if (!session) return;
 
@@ -469,6 +471,23 @@ function PublishEventForm() {
       </div>
 
       <div className="border-t border-border pt-6">
+        <SectionLabel>Solicitudes de ingreso</SectionLabel>
+        <div className="flex gap-2">
+          <VisibilityOption active={!requiresApproval} onClick={() => setRequiresApproval(false)}>
+            Automáticas
+          </VisibilityOption>
+          <VisibilityOption active={requiresApproval} onClick={() => setRequiresApproval(true)}>
+            Requieren aprobación
+          </VisibilityOption>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {requiresApproval
+            ? "Tenés que aceptar a cada jugador a mano desde el panel de anfitrión antes de que pueda ver el mapa."
+            : "El jugador elige equipo y queda adentro al toque, sin esperar tu aprobación."}
+        </p>
+      </div>
+
+      <div className="border-t border-border pt-6">
         <SectionLabel>Costos (opcional)</SectionLabel>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -492,7 +511,7 @@ function PublishEventForm() {
         </div>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 border-t border-border pt-6">
         <Label
           htmlFor="event-description"
           className="text-xs tracking-[0.2em] text-muted-foreground uppercase"

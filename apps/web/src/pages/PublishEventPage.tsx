@@ -1,8 +1,12 @@
 import { Link } from "react-router";
 import PublishEventForm from "../components/PublishEventForm";
 import TacticalPanel from "../components/TacticalPanel";
+import GoogleAccountPanel from "../components/GoogleAccountPanel";
+import { useSession } from "../contexts/SessionContext";
 
 function PublishEventPage() {
+  const session = useSession();
+
   return (
     <main className="tactical-grid min-h-svh bg-background px-4 py-10 text-foreground sm:px-8">
       <div className="mx-auto max-w-xl">
@@ -19,7 +23,11 @@ function PublishEventPage() {
         </header>
 
         <TacticalPanel title="Convocatoria">
-          <PublishEventForm />
+          {session.status !== "ready" ? null : session.isAnonymous ? (
+            <GoogleAccountPanel anonymousMessage="Para publicar un evento necesitás iniciar sesión con Google." />
+          ) : (
+            <PublishEventForm />
+          )}
         </TacticalPanel>
       </div>
     </main>

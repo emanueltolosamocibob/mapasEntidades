@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { useJoinSession } from "../hooks/useJoinSession";
+import { useMyParticipant } from "../hooks/useMyParticipant";
+import { useSession } from "../contexts/SessionContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -15,10 +17,12 @@ const optionStyle = { backgroundColor: "var(--popover)", color: "var(--popover-f
 function EventJoinForm({
   code,
   teams,
+  requiresApproval,
   onJoined,
 }: {
   code: string;
   teams: EventListingTeam[];
+  requiresApproval: boolean;
   onJoined: () => void;
 }) {
   const joinableTeams = teams.filter(
@@ -31,6 +35,11 @@ function EventJoinForm({
   const [nicknameError, setNicknameError] = useState<string | null>(null);
   const { state, joinSession } = useJoinSession();
   const navigate = useNavigate();
+  const session = useSession();
+
+  const userId = session.status === "ready" ? session.user.id : undefined;
+  const sessionId = state.status === "submitted" ? state.participant.session_id : undefined;
+  const myParticipant = useMyParticipant(sessionId, userId);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -54,7 +63,30 @@ function EventJoinForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.status]);
 
+  // Si la solicitud quedó "pending" (el host eligió requerir aprobación),
+  // esto detecta cuando el host la acepta y recién ahí manda a jugar --
+  // mismo patrón que JoinSessionForm para partidas rápidas.
+  useEffect(() => {
+    if (myParticipant?.status === "accepted") {
+      navigate(`/session/${code}/play`);
+    }
+  }, [myParticipant?.status, code, navigate]);
+
   if (state.status === "submitted") {
+    if (state.participant.status === "pending") {
+      return (
+        <div className="space-y-2">
+          <p className="text-sm">
+            Solicitud enviada como{" "}
+            <strong className="text-primary">{state.participant.nickname}</strong>.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Esperando que el anfitrión te acepte...
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-3">
         <p className="text-sm">
@@ -73,6 +105,11 @@ function EventJoinForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      <p className="text-xs text-muted-foreground">
+        {requiresApproval
+          ? "El anfitrión tiene que aceptar tu solicitud antes de que puedas ver el mapa."
+          : "Te unís directo, sin esperar aprobación del anfitrión."}
+      </p>
       <div className="space-y-1.5">
         <Label
           htmlFor="event-join-team"

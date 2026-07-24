@@ -381,7 +381,12 @@ function EventDetailPage() {
               title="Inscribirme"
               className="panel-hazard-stripes border-2 border-primary bg-primary/10"
             >
-              <EventJoinForm code={event.code} teams={event.teams} onJoined={refresh} />
+              <EventJoinForm
+                code={event.code}
+                teams={event.teams}
+                requiresApproval={event.requiresApproval}
+                onJoined={refresh}
+              />
             </TacticalPanel>
           )}
         </div>

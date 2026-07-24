@@ -42,6 +42,7 @@ export type EventListing = {
   byopDeposit: number | null;
   rentalCost: number | null;
   rentalDeposit: number | null;
+  requiresApproval: boolean;
   photos: EventListingPhoto[];
   teams: EventListingTeam[];
   markers: EventListingMarker[];

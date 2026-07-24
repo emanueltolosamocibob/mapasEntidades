@@ -492,20 +492,6 @@ function TacticalZoomControl({
   );
 }
 
-// Retículo del centro del mapa: dos líneas finas + un cuadrado sin relleno
-// donde se cruzan. Fijo al centro del viewport del mapa (no a una
-// coordenada geográfica) -- por eso es puro CSS estático, sin listeners ni
-// estado, no se recalcula en cada pan/zoom.
-function CenterReticle() {
-  return (
-    <div className="pointer-events-none absolute inset-0 z-[900]">
-      <div className="absolute top-1/2 right-0 left-0 h-px -translate-y-1/2 bg-primary/50" />
-      <div className="absolute top-0 bottom-0 left-1/2 w-px -translate-x-1/2 bg-primary/50" />
-      <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 border border-primary" />
-    </div>
-  );
-}
-
 function colorForTeam(
   teamId: string | null | undefined,
   myTeamId: string | null | undefined,
@@ -766,7 +752,6 @@ function MapView({
         <MarkerPlacementController active={placingMarker} onPlace={handlePlaceMarker} />
       )}
       <MapModeClassSync mode={mapMode} />
-      <CenterReticle />
       {/* La brújula "de verdad" vive arriba del panel de "Envío de posición"
           en PlayPage.tsx (no montada en el mapa) -- esta copia solo se ve
           en fullscreen, donde el resto de la página (sidebar incluido)
