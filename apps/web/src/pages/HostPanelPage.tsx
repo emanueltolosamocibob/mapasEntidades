@@ -130,7 +130,7 @@ function HostPanelPage() {
       <div className="mx-auto max-w-3xl">
         <header className="mb-8 flex items-start justify-between gap-6 border-b border-border pb-6">
           <div className="min-w-0 flex-1">
-            {isUnstartedEvent && (
+            {sessionByCode.session.kind === "event" && (
               <Link
                 to="/eventos"
                 className="mb-3 inline-block text-sm tracking-[0.2em] text-white uppercase hover:text-primary"
@@ -242,12 +242,18 @@ function HostPanelPage() {
             </TacticalPanel>
           )}
 
-          <TacticalPanel title="Solicitudes pendientes">
-            <PendingRequestsList participants={pendingParticipants} teams={teams} />
-          </TacticalPanel>
+          {!isClosed && (
+            <TacticalPanel title="Solicitudes pendientes">
+              <PendingRequestsList participants={pendingParticipants} teams={teams} />
+            </TacticalPanel>
+          )}
 
           <TacticalPanel title="Jugadores aceptados">
-            <AcceptedParticipantsList participants={acceptedParticipants} teams={teams} />
+            <AcceptedParticipantsList
+              participants={acceptedParticipants}
+              teams={teams}
+              readOnly={isClosed}
+            />
           </TacticalPanel>
         </div>
       </div>
