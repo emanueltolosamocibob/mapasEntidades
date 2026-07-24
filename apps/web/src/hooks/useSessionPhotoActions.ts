@@ -36,12 +36,14 @@ export function useSessionPhotoActions() {
     setError(null);
 
     if (!file.type.startsWith("image/")) {
-      setError("Solo se pueden subir imágenes.");
-      return false;
+      const message = "Solo se pueden subir imágenes.";
+      setError(message);
+      return { ok: false, error: message };
     }
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      setError("La imagen no puede pesar más de 5MB.");
-      return false;
+      const message = "La imagen no puede pesar más de 5MB.";
+      setError(message);
+      return { ok: false, error: message };
     }
 
     setUploading(true);
@@ -56,7 +58,7 @@ export function useSessionPhotoActions() {
     if (uploadError) {
       setError(uploadError.message);
       setUploading(false);
-      return false;
+      return { ok: false, error: uploadError.message };
     }
 
     const { error: insertError } = await supabase.from("session_photos").insert({
@@ -70,9 +72,9 @@ export function useSessionPhotoActions() {
 
     if (insertError) {
       setError(insertError.message);
-      return false;
+      return { ok: false, error: insertError.message };
     }
-    return true;
+    return { ok: true, error: null };
   }
 
   return { uploadPhoto, deletePhoto, uploading, error };
