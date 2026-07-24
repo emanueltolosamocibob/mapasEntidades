@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from "react-leaflet";
-import { latLng } from "leaflet";
+import { latLng, DomEvent } from "leaflet";
+import { Layers } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { originDotIcon, myLocationTaggedIcon } from "../lib/tacticalIcon";
 import RecenterButton from "./RecenterButton";
+import { cn } from "../lib/utils";
 
 const CARTO_DARK_URL =
   "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
+
+const SATELLITE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
 const DEFAULT_CENTER: [number, number] = [-34.6037, -58.3816];
 
@@ -73,6 +78,41 @@ function FlyToPoint({ point, signal }: { point: Point; signal: number }) {
   return null;
 }
 
+function SatelliteToggleButton({
+  active,
+  onToggle,
+  className,
+}: {
+  active: boolean;
+  onToggle: () => void;
+  className?: string;
+}) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Mismo motivo que en RecenterButton -- sin esto el click atraviesa al
+  // mapa por debajo y dispara el click-to-place del origen.
+  useEffect(() => {
+    if (buttonRef.current) DomEvent.disableClickPropagation(buttonRef.current);
+  }, []);
+
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      onClick={onToggle}
+      aria-label={active ? "Ver mapa normal" : "Ver vista satelital"}
+      title={active ? "Ver mapa normal" : "Ver vista satelital"}
+      className={cn(
+        "absolute z-[1000] flex h-9 w-9 items-center justify-center border bg-background/90 hover:bg-primary/10",
+        active ? "border-primary text-primary" : "border-border text-muted-foreground",
+        className
+      )}
+    >
+      <Layers className="h-4 w-4" />
+    </button>
+  );
+}
+
 function OriginPicker({
   value,
   onChange,
@@ -85,6 +125,7 @@ function OriginPicker({
   focusSignal?: number;
 }) {
   const [myLocation, setMyLocation] = useState<Point | null>(null);
+  const [satellite, setSatellite] = useState(false);
 
   return (
     <div>
@@ -97,11 +138,18 @@ function OriginPicker({
           zoom={14}
           style={{ height: "100%", width: "100%" }}
         >
-          <TileLayer
-            className="map-tiles-hc"
-            url={CARTO_DARK_URL}
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          />
+          {satellite ? (
+            <TileLayer
+              url={SATELLITE_URL}
+              attribution="Tiles &copy; Esri"
+            />
+          ) : (
+            <TileLayer
+              className="map-tiles-hc"
+              url={CARTO_DARK_URL}
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            />
+          )}
           <ClickToPlace onPick={onChange} />
           {!value && <CenterOnMyLocation onLocate={setMyLocation} />}
           {myLocation && (
@@ -124,6 +172,11 @@ function OriginPicker({
             </>
           )}
           <RecenterButton onLocate={setMyLocation} className="top-3 right-3 bottom-auto left-auto" />
+          <SatelliteToggleButton
+            active={satellite}
+            onToggle={() => setSatellite((current) => !current)}
+            className="top-14 right-3 bottom-auto left-auto"
+          />
         </MapContainer>
       </div>
     </div>

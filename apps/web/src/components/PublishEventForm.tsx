@@ -135,7 +135,6 @@ function PublishEventForm() {
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [photosError, setPhotosError] = useState<string | null>(null);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
-  const [isStockCover, setIsStockCover] = useState(false);
 
   useEffect(() => {
     const path = STOCK_COVERS[Math.floor(Math.random() * STOCK_COVERS.length)];
@@ -145,7 +144,6 @@ function PublishEventForm() {
       .then((blob) => {
         if (cancelled) return;
         setCoverFile(new File([blob], path.split("/").pop()!, { type: blob.type }));
-        setIsStockCover(true);
       })
       .catch(() => {
         // Sin conexión al asset estático -- el host elige portada a mano.
@@ -179,7 +177,6 @@ function PublishEventForm() {
     setPhotosError(error);
     if (!error) {
       setCoverFile(file);
-      setIsStockCover(false);
     }
   }
 
@@ -451,7 +448,7 @@ function PublishEventForm() {
         <p className="mt-2 text-xs text-muted-foreground">
           {isPublic
             ? "Aparece listado en Eventos, cualquiera lo puede encontrar."
-            : "No aparece en el listado — solo se puede entrar con el código, igual que una partida privada."}
+            : "No aparece en el listado — solo se puede entrar con el código."}
         </p>
       </div>
 
@@ -512,10 +509,7 @@ function PublishEventForm() {
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      setCoverFile(null);
-                      setIsStockCover(false);
-                    }}
+                    onClick={() => setCoverFile(null)}
                     aria-label="Quitar portada"
                     className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center border border-destructive bg-background/90 text-destructive hover:bg-destructive/10"
                   >
@@ -523,11 +517,6 @@ function PublishEventForm() {
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isStockCover && (
-                    <span className="text-xs tracking-[0.1em] text-muted-foreground uppercase">
-                      Imagen de stock
-                    </span>
-                  )}
                   <Button
                     type="button"
                     variant="outline"

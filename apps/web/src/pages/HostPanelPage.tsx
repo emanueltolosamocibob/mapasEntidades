@@ -162,7 +162,7 @@ function HostPanelPage() {
                   )}
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="destructive"
                     disabled={closing}
                     onClick={() => setConfirmCloseOpen(true)}
                   >
