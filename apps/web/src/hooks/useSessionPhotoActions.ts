@@ -4,6 +4,14 @@ import type { SessionPhoto } from "./useSessionPhotos";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
+// La portada siempre es imagen (se usa como banner). Los documentos además
+// aceptan PDF y Word -- reglamentos, planos del campo, etc.
+const DOCUMENT_MIME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
 // Primer uso de Supabase Storage en el proyecto -- sube al bucket publico
 // "session-photos" (0039_session_photos.sql) bajo "{sessionId}/{archivo}"
 // y despues inserta la fila en session_photos. Portada es unica: subir una
@@ -35,13 +43,18 @@ export function useSessionPhotoActions() {
   ) {
     setError(null);
 
-    if (!file.type.startsWith("image/")) {
-      const message = "Solo se pueden subir imágenes.";
+    const isImage = file.type.startsWith("image/");
+    const isAllowedDocument = kind === "document" && DOCUMENT_MIME_TYPES.includes(file.type);
+    if (!isImage && !isAllowedDocument) {
+      const message =
+        kind === "document"
+          ? "Solo se pueden subir imágenes, PDF o Word."
+          : "Solo se pueden subir imágenes.";
       setError(message);
       return { ok: false, error: message };
     }
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      const message = "La imagen no puede pesar más de 5MB.";
+      const message = "El archivo no puede pesar más de 5MB.";
       setError(message);
       return { ok: false, error: message };
     }

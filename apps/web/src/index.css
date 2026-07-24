@@ -263,3 +263,16 @@ input[type="range"].tactical-slider::-moz-range-thumb {
   background: var(--primary);
   cursor: pointer;
 }
+
+/* Textura de "zona de atención" -- franjas diagonales ámbar de fondo para
+   destacar un panel puntual (ej. "Inscribirme" en EventDetailPage), sin
+   invertir sus colores. */
+.panel-hazard-stripes {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in oklch, var(--primary), transparent 90%) 0px,
+    color-mix(in oklch, var(--primary), transparent 90%) 8px,
+    transparent 8px,
+    transparent 28px
+  );
+}

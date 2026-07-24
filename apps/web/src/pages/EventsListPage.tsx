@@ -10,6 +10,22 @@ import { useSession } from "../contexts/SessionContext";
 import { usePublicEvents, type PublicEvent } from "../hooks/usePublicEvents";
 import { getEventStatus } from "../lib/eventStatus";
 
+// "26 JULIO 2026 - 17:00" -- mes en letras, hora en formato 24hs. El
+// uppercase final lo pone el className del <p> (text-transform), acá
+// alcanza con el texto en minúsculas.
+function formatEventSchedule(iso: string): string {
+  const date = new Date(iso);
+  const day = date.getDate();
+  const month = date.toLocaleDateString("es-AR", { month: "long" });
+  const year = date.getFullYear();
+  const time = date.toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${day} ${month} ${year} - ${time}`;
+}
+
 function CodeSearchForm() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -81,10 +97,7 @@ function EventCard({ event }: { event: PublicEvent }) {
         <p className="text-sm font-bold text-foreground uppercase">{event.name}</p>
         {event.scheduledAt && (
           <p className="mt-1 text-xs tracking-[0.1em] text-primary uppercase">
-            {new Date(event.scheduledAt).toLocaleString("es-AR", {
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}
+            {formatEventSchedule(event.scheduledAt)}
           </p>
         )}
       </div>
