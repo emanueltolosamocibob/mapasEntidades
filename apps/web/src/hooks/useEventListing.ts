@@ -34,6 +34,14 @@ export type EventListing = {
   originLat: number | null;
   originLng: number | null;
   movementRadiusM: number | null;
+  scheduledAt: string | null;
+  organizerName: string | null;
+  contactPhone: string | null;
+  address: string | null;
+  byopCost: number | null;
+  byopDeposit: number | null;
+  rentalCost: number | null;
+  rentalDeposit: number | null;
   photos: EventListingPhoto[];
   teams: EventListingTeam[];
   markers: EventListingMarker[];

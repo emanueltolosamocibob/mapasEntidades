@@ -1,10 +1,9 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router";
 import { X } from "lucide-react";
 import { useCreateSession } from "../hooks/useCreateSession";
 import { useSessionPhotoActions } from "../hooks/useSessionPhotoActions";
 import { usePresetFields } from "../hooks/usePresetFields";
-import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -12,13 +11,22 @@ import OriginPicker from "./OriginPicker";
 import SessionCodeQr from "./SessionCodeQr";
 
 type Point = { lat: number; lng: number };
-type MovementMode = "free" | "restricted";
 type TeamDraft = { name: string; maxPlayers: string };
 
 const MAX_TEAMS = 10;
 const RADIUS_MIN = 100;
 const RADIUS_MAX = 10000;
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+
+// Portada por defecto: se elige una al azar al abrir el formulario para que
+// el evento no arranque sin portada -- el host la puede reemplazar o sacar
+// como cualquier otra foto elegida a mano.
+const STOCK_COVERS = [
+  "/stock-covers/stock-cover-1.jpg",
+  "/stock-covers/stock-cover-2.jpg",
+  "/stock-covers/stock-cover-3.jpg",
+  "/stock-covers/stock-cover-4.jpg",
+];
 
 const textareaClassName =
   "min-h-24 w-full border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring";
@@ -32,35 +40,39 @@ const optionStyle = { backgroundColor: "var(--popover)", color: "var(--popover-f
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <p className="mb-3 flex items-center gap-2 text-xs tracking-[0.2em] text-muted-foreground uppercase">
-      <span className="h-1 w-1 bg-muted-foreground" />
+    <p className="mb-3 flex items-center gap-2 text-xs tracking-[0.2em] text-primary uppercase">
+      <span className="h-1 w-1 bg-primary" />
       {children}
     </p>
   );
 }
 
-function ModeOption({
-  active,
-  onClick,
-  children,
+// Costos en pesos, sin decimales -- filtra cualquier caracter que no sea
+// dígito (bloquea "." y "," del teclado numérico) en vez de dejar que
+// type="number" acepte decimales.
+function CostInput({
+  value,
+  onChange,
+  placeholder,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex-1 border px-3 py-2 text-xs tracking-[0.15em] uppercase transition-colors",
-        active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
-      )}
-    >
-      {children}
-    </button>
+    <div className="relative min-w-0 flex-1">
+      <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-muted-foreground">
+        $
+      </span>
+      <Input
+        type="text"
+        inputMode="numeric"
+        value={value}
+        onChange={(event) => onChange(event.target.value.replace(/\D/g, ""))}
+        placeholder={placeholder}
+        className="pl-5"
+      />
+    </div>
   );
 }
 
@@ -69,9 +81,17 @@ function PublishEventForm() {
   const [description, setDescription] = useState("");
   const [teams, setTeams] = useState<TeamDraft[]>([{ name: "Equipo 1", maxPlayers: "" }]);
   const [origin, setOrigin] = useState<Point | null>(null);
-  const [movementMode, setMovementMode] = useState<MovementMode>("free");
   const [radiusMeters, setRadiusMeters] = useState("300");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [organizerName, setOrganizerName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [byopCost, setByopCost] = useState("");
+  const [byopDeposit, setByopDeposit] = useState("");
+  const [rentalCost, setRentalCost] = useState("");
+  const [rentalDeposit, setRentalDeposit] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
   const [teamsError, setTeamsError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const { state, createSession } = useCreateSession();
@@ -88,6 +108,32 @@ function PublishEventForm() {
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [photosError, setPhotosError] = useState<string | null>(null);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [isStockCover, setIsStockCover] = useState(false);
+
+  useEffect(() => {
+    const path = STOCK_COVERS[Math.floor(Math.random() * STOCK_COVERS.length)];
+    let cancelled = false;
+    fetch(path)
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        setCoverFile(new File([blob], path.split("/").pop()!, { type: blob.type }));
+        setIsStockCover(true);
+      })
+      .catch(() => {
+        // Sin conexión al asset estático -- el host elige portada a mano.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const coverPreviewUrl = useMemo(() => (coverFile ? URL.createObjectURL(coverFile) : null), [coverFile]);
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+    };
+  }, [coverPreviewUrl]);
   const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const documentsInputRef = useRef<HTMLInputElement>(null);
@@ -104,7 +150,10 @@ function PublishEventForm() {
     if (!file) return;
     const error = validatePhoto(file);
     setPhotosError(error);
-    if (!error) setCoverFile(file);
+    if (!error) {
+      setCoverFile(file);
+      setIsStockCover(false);
+    }
   }
 
   function handleDocumentsChange(event: ChangeEvent<HTMLInputElement>) {
@@ -151,11 +200,23 @@ function PublishEventForm() {
     }
   }
 
+  function parseOptionalCost(value: string, label: string): number | null | undefined {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      setDetailsError(`${label} tiene que ser un número mayor o igual a 0.`);
+      return undefined;
+    }
+    return parsed;
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setValidationError(null);
     setNameError(null);
     setTeamsError(null);
+    setDetailsError(null);
 
     const cleanTeams = teams
       .map((team) => ({ name: team.name.trim(), maxPlayers: team.maxPlayers.trim() }))
@@ -164,6 +225,24 @@ function PublishEventForm() {
 
     if (!name.trim()) {
       setNameError("Ingresá un nombre válido.");
+      hasError = true;
+    }
+
+    if (!scheduledAt || !organizerName.trim() || !contactPhone.trim() || !address.trim()) {
+      setDetailsError("Completá fecha y hora, organizador, contacto y dirección del evento.");
+      hasError = true;
+    }
+
+    const parsedByopCost = parseOptionalCost(byopCost, "El costo de BYOP");
+    const parsedByopDeposit = parseOptionalCost(byopDeposit, "La seña de BYOP");
+    const parsedRentalCost = parseOptionalCost(rentalCost, "El costo de alquiler");
+    const parsedRentalDeposit = parseOptionalCost(rentalDeposit, "La seña de alquiler");
+    if (
+      parsedByopCost === undefined ||
+      parsedByopDeposit === undefined ||
+      parsedRentalCost === undefined ||
+      parsedRentalDeposit === undefined
+    ) {
       hasError = true;
     }
     if (cleanTeams.length < 1) {
@@ -183,19 +262,16 @@ function PublishEventForm() {
       maxPlayers: team.maxPlayers ? Number(team.maxPlayers) : null,
     }));
 
-    let movementRadiusM: number | null = null;
-    if (movementMode === "restricted") {
-      const radius = Number(radiusMeters);
-      if (!origin) {
-        setValidationError("Marcá un punto de partida en el mapa para restringir el movimiento.");
-        return;
-      }
-      if (!Number.isFinite(radius) || radius < RADIUS_MIN || radius > RADIUS_MAX) {
-        setValidationError(`El radio tiene que estar entre ${RADIUS_MIN} y ${RADIUS_MAX} metros.`);
-        return;
-      }
-      movementRadiusM = radius;
+    const radius = Number(radiusMeters);
+    if (!origin) {
+      setValidationError("Marcá un punto de partida en el mapa para restringir el movimiento.");
+      return;
     }
+    if (!Number.isFinite(radius) || radius < RADIUS_MIN || radius > RADIUS_MAX) {
+      setValidationError(`El radio tiene que estar entre ${RADIUS_MIN} y ${RADIUS_MAX} metros.`);
+      return;
+    }
+    const movementRadiusM = radius;
 
     const session = await createSession({
       name: name.trim(),
@@ -204,6 +280,14 @@ function PublishEventForm() {
       movementRadiusM,
       description: description.trim() || null,
       startNow: false,
+      scheduledAt: new Date(scheduledAt).toISOString(),
+      organizerName: organizerName.trim(),
+      contactPhone: contactPhone.trim(),
+      address: address.trim(),
+      byopCost: parsedByopCost ?? null,
+      byopDeposit: parsedByopDeposit ?? null,
+      rentalCost: parsedRentalCost ?? null,
+      rentalDeposit: parsedRentalDeposit ?? null,
     });
     if (!session) return;
 
@@ -268,6 +352,88 @@ function PublishEventForm() {
         {nameError && <p className="text-xs text-destructive">{nameError}</p>}
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="event-scheduled-at"
+            className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
+          >
+            Fecha y hora de inicio
+          </Label>
+          <Input
+            id="event-scheduled-at"
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(event) => setScheduledAt(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="event-organizer"
+            className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
+          >
+            Nombre del organizador
+          </Label>
+          <Input
+            id="event-organizer"
+            value={organizerName}
+            onChange={(event) => setOrganizerName(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="event-contact"
+            className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
+          >
+            Número de contacto
+          </Label>
+          <Input
+            id="event-contact"
+            type="tel"
+            value={contactPhone}
+            onChange={(event) => setContactPhone(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="event-address"
+            className="text-xs tracking-[0.2em] text-muted-foreground uppercase"
+          >
+            Dirección del evento
+          </Label>
+          <Input
+            id="event-address"
+            value={address}
+            onChange={(event) => setAddress(event.target.value)}
+          />
+        </div>
+      </div>
+      {detailsError && <p className="text-sm text-destructive">{detailsError}</p>}
+
+      <div className="border-t border-border pt-6">
+        <SectionLabel>Costos (opcional)</SectionLabel>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+              Costo BYOP
+            </Label>
+            <div className="flex items-center gap-2">
+              <CostInput value={byopCost} onChange={setByopCost} placeholder="Costo" />
+              <CostInput value={byopDeposit} onChange={setByopDeposit} placeholder="Seña" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+              Costo alquiler de equipo
+            </Label>
+            <div className="flex items-center gap-2">
+              <CostInput value={rentalCost} onChange={setRentalCost} placeholder="Costo" />
+              <CostInput value={rentalDeposit} onChange={setRentalDeposit} placeholder="Seña" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-1.5">
         <Label
           htmlFor="event-description"
@@ -292,16 +458,40 @@ function PublishEventForm() {
               Portada
             </p>
             {coverFile ? (
-              <div className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-sm">{coverFile.name}</span>
-                <button
-                  type="button"
-                  onClick={() => setCoverFile(null)}
-                  aria-label="Quitar portada"
-                  className="flex h-6 w-6 shrink-0 items-center justify-center border border-destructive text-destructive hover:bg-destructive/10"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+              <div className="space-y-2">
+                <div className="relative">
+                  <img
+                    src={coverPreviewUrl!}
+                    alt=""
+                    className="h-32 w-full border border-border object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverFile(null);
+                      setIsStockCover(false);
+                    }}
+                    aria-label="Quitar portada"
+                    className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center border border-destructive bg-background/90 text-destructive hover:bg-destructive/10"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isStockCover && (
+                    <span className="text-xs tracking-[0.1em] text-muted-foreground uppercase">
+                      Imagen de stock
+                    </span>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => coverInputRef.current?.click()}
+                  >
+                    Reemplazar portada
+                  </Button>
+                </div>
               </div>
             ) : (
               <Button
@@ -411,80 +601,60 @@ function PublishEventForm() {
       <div className="border-t border-border pt-6">
         <SectionLabel>Punto de partida y movimiento</SectionLabel>
         <div className="space-y-3">
-          <div className="flex gap-2">
-            <ModeOption
-              active={movementMode === "free"}
-              onClick={() => {
-                setMovementMode("free");
-                setOrigin(null);
-                setSelectedFieldId("");
-              }}
-            >
-              Movimiento libre
-            </ModeOption>
-            <ModeOption active={movementMode === "restricted"} onClick={() => setMovementMode("restricted")}>
-              Restringir radio
-            </ModeOption>
-          </div>
-
-          {movementMode === "restricted" && (
-            <>
-              {presetFields.length > 0 && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                    Campo predefinido
-                  </Label>
-                  <select
-                    className={selectClassName}
-                    value={selectedFieldId}
-                    onChange={(event) => {
-                      const field = presetFields.find((f) => f.id === event.target.value);
-                      setSelectedFieldId(event.target.value);
-                      if (field) {
-                        setOrigin({ lat: field.lat, lng: field.lng });
-                        setFocusSignal((n) => n + 1);
-                      }
-                    }}
-                  >
-                    <option value="" disabled style={optionStyle}>
-                      Elegir campo
-                    </option>
-                    {presetFields.map((field) => (
-                      <option key={field.id} value={field.id} style={optionStyle}>
-                        {field.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <OriginPicker
-                value={origin}
-                onChange={(point) => {
-                  setSelectedFieldId("");
-                  setOrigin(point);
+          {presetFields.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+                Campo predefinido
+              </Label>
+              <select
+                className={selectClassName}
+                value={selectedFieldId}
+                onChange={(event) => {
+                  const field = presetFields.find((f) => f.id === event.target.value);
+                  setSelectedFieldId(event.target.value);
+                  if (field) {
+                    setOrigin({ lat: field.lat, lng: field.lng });
+                    setFocusSignal((n) => n + 1);
+                  }
                 }}
-                radiusMeters={
-                  Number(radiusMeters) > 0
-                    ? Math.min(Math.max(Number(radiusMeters), RADIUS_MIN), RADIUS_MAX)
-                    : 0
-                }
-                focusSignal={focusSignal}
-              />
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Restringir a</span>
-                <Input
-                  type="number"
-                  min={RADIUS_MIN}
-                  max={RADIUS_MAX}
-                  value={radiusMeters}
-                  onChange={(event) => setRadiusMeters(event.target.value)}
-                  onBlur={handleRadiusBlur}
-                  className="w-24"
-                />
-                <span className="text-muted-foreground">metros</span>
-              </div>
-            </>
+              >
+                <option value="" disabled style={optionStyle}>
+                  Elegir campo
+                </option>
+                {presetFields.map((field) => (
+                  <option key={field.id} value={field.id} style={optionStyle}>
+                    {field.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
+          <OriginPicker
+            value={origin}
+            onChange={(point) => {
+              setSelectedFieldId("");
+              setOrigin(point);
+            }}
+            radiusMeters={
+              Number(radiusMeters) > 0
+                ? Math.min(Math.max(Number(radiusMeters), RADIUS_MIN), RADIUS_MAX)
+                : 0
+            }
+            focusSignal={focusSignal}
+          />
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Restringir a</span>
+            <Input
+              type="number"
+              min={RADIUS_MIN}
+              max={RADIUS_MAX}
+              value={radiusMeters}
+              onChange={(event) => setRadiusMeters(event.target.value)}
+              onBlur={handleRadiusBlur}
+              className="w-24"
+            />
+            <span className="text-muted-foreground">metros</span>
+          </div>
         </div>
       </div>
 

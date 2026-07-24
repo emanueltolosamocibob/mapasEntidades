@@ -133,7 +133,7 @@ function HostPanelPage() {
             {isUnstartedEvent && (
               <Link
                 to="/eventos"
-                className="mb-1 inline-block text-xs tracking-[0.2em] text-muted-foreground uppercase hover:text-primary"
+                className="mb-1 inline-block text-sm tracking-[0.2em] text-white uppercase hover:text-primary"
               >
                 ← Volver
               </Link>

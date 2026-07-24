@@ -9,6 +9,7 @@ export type PublicEvent = {
   createdAt: string;
   coverPhotoUrl: string | null;
   startedAt: string | null;
+  scheduledAt: string | null;
   status: string;
   hasOpenSlots: boolean;
   acceptedCount: number;
@@ -28,6 +29,7 @@ type PublicEventRow = {
   created_at: string;
   cover_photo_path: string | null;
   started_at: string | null;
+  scheduled_at: string | null;
   status: string;
   has_open_slots: boolean;
   accepted_count: number;
@@ -61,6 +63,7 @@ export function usePublicEvents() {
               .publicUrl
           : null,
         startedAt: row.started_at,
+        scheduledAt: row.scheduled_at,
         status: row.status,
         hasOpenSlots: row.has_open_slots,
         acceptedCount: row.accepted_count,
