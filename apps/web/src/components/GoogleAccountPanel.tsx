@@ -4,7 +4,11 @@ import { useSession } from "../contexts/SessionContext";
 import { consumeOAuthRedirectError, linkGoogleAccount, signInWithGoogle } from "../lib/supabaseClient";
 import { Button } from "./ui/button";
 
-function GoogleAccountPanel() {
+function GoogleAccountPanel({
+  anonymousMessage = "Iniciá sesión con Google para acceder al historial de tus partidas.",
+}: {
+  anonymousMessage?: string;
+}) {
   const session = useSession();
   const [linking, setLinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +45,7 @@ function GoogleAccountPanel() {
   if (session.isAnonymous) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          Iniciá sesión con Google para acceder al historial de tus partidas.
-        </p>
+        <p className="text-sm text-muted-foreground">{anonymousMessage}</p>
         <Button type="button" className="w-full" disabled={linking} onClick={handleLogin}>
           {linking ? "Redirigiendo..." : "Iniciar sesión con Google"}
         </Button>

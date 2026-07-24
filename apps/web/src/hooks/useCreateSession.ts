@@ -25,6 +25,7 @@ type EventDetails = {
   rentalCost?: number | null;
   rentalDeposit?: number | null;
   isPublic?: boolean;
+  requiresApproval?: boolean;
 };
 
 type CreateSessionState =
@@ -70,6 +71,7 @@ export function useCreateSession() {
       p_rental_cost: params.rentalCost ?? null,
       p_rental_deposit: params.rentalDeposit ?? null,
       p_is_public: params.isPublic ?? true,
+      p_requires_approval: params.requiresApproval ?? false,
     });
 
     if (error) {
