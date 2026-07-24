@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useCreateSession } from "../hooks/useCreateSession";
 import { useSessionPhotoActions } from "../hooks/useSessionPhotoActions";
 import { usePresetFields } from "../hooks/usePresetFields";
+import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -44,6 +45,31 @@ function SectionLabel({ children }: { children: string }) {
       <span className="h-1 w-1 bg-primary" />
       {children}
     </p>
+  );
+}
+
+function VisibilityOption({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex-1 border px-3 py-2 text-xs tracking-[0.15em] uppercase transition-colors",
+        active
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -90,6 +116,7 @@ function PublishEventForm() {
   const [byopDeposit, setByopDeposit] = useState("");
   const [rentalCost, setRentalCost] = useState("");
   const [rentalDeposit, setRentalDeposit] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [nameError, setNameError] = useState<string | null>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [teamsError, setTeamsError] = useState<string | null>(null);
@@ -288,6 +315,7 @@ function PublishEventForm() {
       byopDeposit: parsedByopDeposit ?? null,
       rentalCost: parsedRentalCost ?? null,
       rentalDeposit: parsedRentalDeposit ?? null,
+      isPublic,
     });
     if (!session) return;
 
@@ -323,7 +351,7 @@ function PublishEventForm() {
           Evento publicado — código de acceso
         </p>
         <p className="text-3xl font-bold tracking-[0.15em] text-primary">{state.session.code}</p>
-        <SessionCodeQr code={state.session.code} />
+        <SessionCodeQr code={state.session.code} path={`/eventos/${state.session.code}`} />
 
         {uploadingPhotos && (
           <p className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
@@ -409,6 +437,23 @@ function PublishEventForm() {
         </div>
       </div>
       {detailsError && <p className="text-sm text-destructive">{detailsError}</p>}
+
+      <div className="border-t border-border pt-6">
+        <SectionLabel>Visibilidad</SectionLabel>
+        <div className="flex gap-2">
+          <VisibilityOption active={isPublic} onClick={() => setIsPublic(true)}>
+            Público
+          </VisibilityOption>
+          <VisibilityOption active={!isPublic} onClick={() => setIsPublic(false)}>
+            Privado
+          </VisibilityOption>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {isPublic
+            ? "Aparece listado en Eventos, cualquiera lo puede encontrar."
+            : "No aparece en el listado — solo se puede entrar con el código, igual que una partida privada."}
+        </p>
+      </div>
 
       <div className="border-t border-border pt-6">
         <SectionLabel>Costos (opcional)</SectionLabel>

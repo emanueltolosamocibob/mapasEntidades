@@ -133,12 +133,12 @@ function HostPanelPage() {
             {isUnstartedEvent && (
               <Link
                 to="/eventos"
-                className="mb-1 inline-block text-sm tracking-[0.2em] text-white uppercase hover:text-primary"
+                className="mb-3 inline-block text-sm tracking-[0.2em] text-white uppercase hover:text-primary"
               >
                 ← Volver
               </Link>
             )}
-            <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase">
+            <p className="mt-1 text-xs tracking-[0.3em] text-muted-foreground uppercase">
               Panel de anfitrión
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -182,7 +182,7 @@ function HostPanelPage() {
               </div>
             )}
 
-            {!isClosed && userId && myParticipant?.status !== "accepted" && (
+            {!isClosed && !isUnstartedEvent && userId && myParticipant?.status !== "accepted" && (
               <div className="mt-4">
                 <HostJoinForm
                   sessionId={currentSessionId}
@@ -203,7 +203,11 @@ function HostPanelPage() {
 
           {!isClosed && code && (
             <div className="shrink-0">
-              <SessionCodeQr code={code} size={120} />
+              <SessionCodeQr
+                code={code}
+                size={120}
+                path={sessionByCode.session.kind === "event" ? `/eventos/${code}` : undefined}
+              />
             </div>
           )}
         </header>

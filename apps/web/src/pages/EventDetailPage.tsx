@@ -139,7 +139,20 @@ function EventDetailPage() {
                 <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">
                   Contacto
                 </dt>
-                <dd className="text-foreground">{event.contactPhone || "—"}</dd>
+                <dd>
+                  {event.contactPhone ? (
+                    <a
+                      href={`https://wa.me/${event.contactPhone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
+                    >
+                      {event.contactPhone}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
               </div>
               <div>
                 <dt className="text-xs tracking-[0.15em] text-muted-foreground uppercase">

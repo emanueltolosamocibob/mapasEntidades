@@ -1,13 +1,48 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import TacticalPanel from "../components/TacticalPanel";
 import EventStatusTag from "../components/EventStatusTag";
 import EventCapacityTag from "../components/EventCapacityTag";
 import GoogleSignInDialog from "../components/GoogleSignInDialog";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { useSession } from "../contexts/SessionContext";
 import { usePublicEvents, type PublicEvent } from "../hooks/usePublicEvents";
 import { getEventStatus } from "../lib/eventStatus";
+
+function CodeSearchForm() {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setError("Ingresá un código.");
+      return;
+    }
+    setError(null);
+    navigate(`/eventos/${trimmed.toUpperCase()}`);
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mb-8 flex items-start gap-2">
+      <div className="flex-1">
+        <Input
+          value={code}
+          onChange={(event) => setCode(event.target.value)}
+          placeholder="Ingresar código"
+          className="uppercase"
+        />
+        {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+      </div>
+      <Button type="submit" variant="outline">
+        Buscar
+      </Button>
+    </form>
+  );
+}
 
 function EventCard({ event }: { event: PublicEvent }) {
   const status = getEventStatus(event);
@@ -51,9 +86,6 @@ function EventCard({ event }: { event: PublicEvent }) {
               timeStyle: "short",
             })}
           </p>
-        )}
-        {event.description && (
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{event.description}</p>
         )}
       </div>
     </Link>
@@ -103,6 +135,8 @@ function EventsListPage() {
             </Button>
           </div>
         </header>
+
+        <CodeSearchForm />
 
         {state.status === "loading" && (
           <p className="text-sm text-muted-foreground">Cargando eventos...</p>
