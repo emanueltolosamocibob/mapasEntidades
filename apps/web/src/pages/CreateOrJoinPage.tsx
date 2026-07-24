@@ -28,7 +28,7 @@ function CreateOrJoinPage() {
             ← Volver
           </Link>
           <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            Partida <span className="text-primary">rápida</span>
+            Partida <span className="text-primary">privada</span>
           </h1>
         </header>
 

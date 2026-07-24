@@ -33,7 +33,7 @@ function AccountPage() {
         <p className="text-sm text-muted-foreground">
           Iniciá sesión con Google desde la pantalla principal para gestionar tu usuario.
         </p>
-        <Link to="/partida-rapida" className="text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary">
+        <Link to="/" className="text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary">
           Volver al inicio
         </Link>
       </main>
@@ -85,7 +85,7 @@ function AccountPage() {
 
         <div className="mt-6 flex items-center justify-between gap-4">
           <Link
-            to="/partida-rapida"
+            to="/"
             className="text-sm text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary"
           >
             Volver al inicio

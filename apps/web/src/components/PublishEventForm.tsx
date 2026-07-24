@@ -88,6 +88,7 @@ function PublishEventForm() {
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [photosError, setPhotosError] = useState<string | null>(null);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const documentsInputRef = useRef<HTMLInputElement>(null);
 
@@ -210,9 +211,22 @@ function PublishEventForm() {
     // las fotos elegidas se suben en segundo plano con su propio indicador.
     if (coverFile || documentFiles.length > 0) {
       setUploadingPhotos(true);
-      if (coverFile) await uploadPhoto(session.id, coverFile, "cover");
+      setPhotoUploadError(null);
+      const failures: string[] = [];
+
+      if (coverFile) {
+        const result = await uploadPhoto(session.id, coverFile, "cover");
+        if (!result.ok) failures.push(`Portada: ${result.error}`);
+      }
       for (const file of documentFiles) {
-        await uploadPhoto(session.id, file, "document");
+        const result = await uploadPhoto(session.id, file, "document");
+        if (!result.ok) failures.push(`${file.name}: ${result.error}`);
+      }
+
+      if (failures.length > 0) {
+        setPhotoUploadError(
+          `No se pudieron subir algunas fotos (podés reintentar desde el panel de anfitrión): ${failures.join("; ")}`
+        );
       }
       setUploadingPhotos(false);
     }
@@ -232,6 +246,7 @@ function PublishEventForm() {
             Subiendo fotos...
           </p>
         )}
+        {photoUploadError && <p className="text-xs text-destructive">{photoUploadError}</p>}
 
         <Link
           to={`/session/${state.session.code}/host`}

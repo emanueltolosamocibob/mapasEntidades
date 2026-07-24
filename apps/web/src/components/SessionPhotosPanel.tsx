@@ -17,7 +17,7 @@ function SessionPhotosPanel({ sessionId }: { sessionId: string }) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    const ok = await uploadPhoto(sessionId, file, "cover", cover);
+    const { ok } = await uploadPhoto(sessionId, file, "cover", cover);
     if (ok) refresh();
   }
 

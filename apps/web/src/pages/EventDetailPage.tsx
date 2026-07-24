@@ -93,11 +93,11 @@ function EventDetailPage() {
         <header className="mb-8 border-b border-border pb-6">
           <Link
             to="/eventos"
-            className="text-xs tracking-[0.2em] text-muted-foreground uppercase hover:text-primary"
+            className="text-sm tracking-[0.2em] text-white uppercase hover:text-primary"
           >
             ← Volver
           </Link>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
               <span className="text-primary">{event.name}</span>
             </h1>
