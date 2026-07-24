@@ -18,6 +18,13 @@ const MAX_TEAMS = 10;
 const RADIUS_MIN = 100;
 const RADIUS_MAX = 10000;
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+const DOCUMENT_MIME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+const DOCUMENT_ACCEPT =
+  "image/*,.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 // Portada por defecto: se elige una al azar al abrir el formulario para que
 // el evento no arranque sin portada -- el host la puede reemplazar o sacar
@@ -163,9 +170,18 @@ function PublishEventForm() {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const documentsInputRef = useRef<HTMLInputElement>(null);
 
-  function validatePhoto(file: File): string | null {
+  function validateCoverPhoto(file: File): string | null {
     if (!file.type.startsWith("image/")) return "Solo se pueden subir imágenes.";
     if (file.size > MAX_PHOTO_SIZE_BYTES) return "La imagen no puede pesar más de 5MB.";
+    return null;
+  }
+
+  function validateDocumentFile(file: File): string | null {
+    const isImage = file.type.startsWith("image/");
+    if (!isImage && !DOCUMENT_MIME_TYPES.includes(file.type)) {
+      return "Solo se pueden subir imágenes, PDF o Word.";
+    }
+    if (file.size > MAX_PHOTO_SIZE_BYTES) return "El archivo no puede pesar más de 5MB.";
     return null;
   }
 
@@ -173,7 +189,7 @@ function PublishEventForm() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    const error = validatePhoto(file);
+    const error = validateCoverPhoto(file);
     setPhotosError(error);
     if (!error) {
       setCoverFile(file);
@@ -185,7 +201,7 @@ function PublishEventForm() {
     event.target.value = "";
     if (files.length === 0) return;
     for (const file of files) {
-      const error = validatePhoto(file);
+      const error = validateDocumentFile(file);
       if (error) {
         setPhotosError(error);
         return;
@@ -580,7 +596,7 @@ function PublishEventForm() {
             <input
               ref={documentsInputRef}
               type="file"
-              accept="image/*"
+              accept={DOCUMENT_ACCEPT}
               multiple
               className="hidden"
               onChange={handleDocumentsChange}
