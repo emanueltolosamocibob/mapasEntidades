@@ -69,6 +69,10 @@ const ROLE_SHAPE_SVG: Record<string, (color: string) => string> = {
     `<polygon points="9,1 17,16 1,16" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" />`,
   sniper: (color) =>
     `<polygon points="9,1 17,9 9,17 1,9" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" />`,
+  medico: (color) =>
+    `<path d="M9,2 L9,16 M2,9 L16,9" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" />`,
+  dmr: (color) =>
+    `<polygon points="9,1 16,6 13,16 5,16 2,6" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" />`,
 };
 
 export function distanceLabelIcon(distanceM: number) {

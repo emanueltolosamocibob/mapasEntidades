@@ -12,6 +12,7 @@ import { DomEvent, latLng, latLngBounds, point, type LatLngBounds } from "leafle
 import {
   Footprints,
   Map as MapIcon,
+  MapPin,
   Maximize,
   Minimize,
   Minus,
@@ -293,56 +294,29 @@ function FullscreenToggle({
   );
 }
 
-const LONG_PRESS_MS = 500;
-const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
+// Agrega un marcador en el centro actual del mapa (el retículo de
+// CenterReticle) -- reemplaza al gesto de mantener presionado, que
+// confundía fácilmente con un pan/drag y no era descubrible.
+function AddMarkerButton({ onPress }: { onPress: (point: { lat: number; lng: number }) => void }) {
+  const map = useMap();
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-// Leaflet normaliza touch a eventos de mouse (mousedown/mouseup/mousemove),
-// así que este mismo listener sirve para desktop y mobile sin lógica
-// separada de touchstart/touchend. Si el dedo/mouse se mueve más de la
-// tolerancia antes de que se cumpla el tiempo, se cancela -- así no
-// confunde un pan/drag del mapa con un "mantener presionado" (MAP-57).
-function MarkerLongPress({
-  onLongPress,
-}: {
-  onLongPress: (point: { lat: number; lng: number }) => void;
-}) {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startPointRef = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (buttonRef.current) DomEvent.disableClickPropagation(buttonRef.current);
+  }, []);
 
-  function clear() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = null;
-    startPointRef.current = null;
-  }
-
-  useMapEvents({
-    mousedown(event) {
-      startPointRef.current = { x: event.containerPoint.x, y: event.containerPoint.y };
-      timeoutRef.current = setTimeout(() => {
-        onLongPress({ lat: event.latlng.lat, lng: event.latlng.lng });
-        clear();
-      }, LONG_PRESS_MS);
-    },
-    mouseup: clear,
-    movestart: clear,
-    mousemove(event) {
-      if (!startPointRef.current) return;
-      const dx = event.containerPoint.x - startPointRef.current.x;
-      const dy = event.containerPoint.y - startPointRef.current.y;
-      if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_TOLERANCE_PX) clear();
-    },
-    // Sin esto, mantener presionado sobre un tile (una <img>) dispara el
-    // menú contextual nativo del navegador (Android: "descargar imagen"),
-    // que se come el gesto y el picker nunca llega a abrirse. En iOS hace
-    // falta además -webkit-touch-callout:none por CSS (ver index.css).
-    contextmenu(event) {
-      event.originalEvent.preventDefault();
-    },
-  });
-
-  useEffect(() => clear, []);
-
-  return null;
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      onClick={() => onPress(map.getCenter())}
+      aria-label="Agregar marcador"
+      title="Agregar marcador"
+      className="flex h-9 w-9 shrink-0 items-center justify-center border border-primary bg-background/90 text-primary hover:bg-primary/10"
+    >
+      <MapPin className="h-4 w-4" />
+    </button>
+  );
 }
 
 // react-leaflet v5 solo lee el className de MapContainer en el mount inicial
@@ -726,7 +700,6 @@ function MapView({
           }
         />
       ))}
-      {canEditMarkers && <MarkerLongPress onLongPress={setPendingMarkerPoint} />}
       <MapModeClassSync mode={mapMode} />
       <CenterReticle />
       {/* La brújula "de verdad" vive arriba del panel de "Envío de posición"
@@ -750,6 +723,7 @@ function MapView({
           de sobra para las 5 en una sola fila, como antes. */}
       <div className="absolute top-3 right-3 z-[1000] flex w-32 flex-wrap justify-end gap-2 sm:w-auto sm:max-w-[calc(100%-1.5rem)]">
         <FullscreenToggle isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
+        {canEditMarkers && <AddMarkerButton onPress={setPendingMarkerPoint} />}
         <RecenterButton
           className="static"
           onPress={() => showStatus("Centrando en mi posición...")}

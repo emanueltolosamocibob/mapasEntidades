@@ -5,7 +5,9 @@ export const ROLE_LABELS: Record<string, string> = {
   capitan: "Capitán",
   radiooperador: "Radiooperador",
   infanteria: "Infantería",
-  sniper: "Sniper",
+  sniper: "Francotirador",
+  medico: "Médico",
+  dmr: "DMR",
 };
 
 function RoleIcon({ role, className }: { role: string; className?: string }) {
@@ -19,6 +21,12 @@ function RoleIcon({ role, className }: { role: string; className?: string }) {
       )}
       {role === "sniper" && (
         <polygon points="9,1 17,9 9,17 1,9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      )}
+      {role === "medico" && (
+        <path d="M9,2 L9,16 M2,9 L16,9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      )}
+      {role === "dmr" && (
+        <polygon points="9,1 16,6 13,16 5,16 2,6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
       )}
       {(role === "infanteria" || !ROLE_LABELS[role]) && (
         <polygon points="9,1 17,16 1,16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />

@@ -143,11 +143,9 @@ body {
   z-index: 1500;
 }
 
-/* Sin esto, mantener presionado sobre un tile (una <img>) dispara el menú
-   contextual táctil del navegador (iOS: Copiar/Guardar imagen) antes de
-   que llegue a completarse el long-press de MarkerLongPress -- el picker
-   de marcadores nunca llegaba a abrirse (MAP-57). Ver también
-   preventDefault(contextmenu) en MarkerLongPress para Android. */
+/* Sin esto, arrastrar/tocar sobre un tile (una <img>) dispara selección de
+   texto o el menú contextual táctil del navegador (iOS: Copiar/Guardar
+   imagen), interfiriendo con el pan del mapa. */
 .leaflet-container {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
