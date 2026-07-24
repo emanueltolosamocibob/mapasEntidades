@@ -5,7 +5,7 @@ type Participant = { id: string; nickname: string; team_id: string | null; role:
 type Team = { id: string; name: string; color: string | null };
 
 const selectClassName =
-  "h-8 border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring disabled:opacity-50";
+  "h-8 border border-input bg-transparent px-2 text-sm text-white outline-none focus-visible:border-ring disabled:opacity-50";
 
 // Los <option> de un <select> nativo no heredan los colores de Tailwind/CSS
 // vars del <select> en todos los navegadores — hay que fijarlos a mano.
@@ -15,7 +15,9 @@ const ROLE_OPTIONS = [
   { value: "capitan", label: "Capitán" },
   { value: "radiooperador", label: "Radiooperador" },
   { value: "infanteria", label: "Infantería" },
-  { value: "sniper", label: "Sniper" },
+  { value: "sniper", label: "Francotirador" },
+  { value: "medico", label: "Médico" },
+  { value: "dmr", label: "DMR" },
 ];
 
 function AcceptedParticipantsList({
